@@ -87,7 +87,8 @@ class TypeAnalysis(program: AProgram)(implicit declData: DeclarationData)
             ret += node -> Some(
               TipTypeOps
                 .close(VarType(node), sol, freshvars)
-                .asInstanceOf[Type])
+                .asInstanceOf[Type]
+            )
           case _ =>
         }
         visitChildren(node, ())
@@ -116,8 +117,10 @@ class TypeAnalysis(program: AProgram)(implicit declData: DeclarationData)
         // Return type is int
         unify(mainFunction,
               FunctionType(params = mainFunction.params, ret = IntType()))
-      case _: ANumber      => ()
-      case _: AInput       => ()
+      case _: ANumber =>
+        unify(node, IntType())
+      case _: AInput =>
+        unify(node, IntType())
       case ifStmt: AIfStmt =>
         // Guard is always int
         unify(ifStmt.guard, IntType())
