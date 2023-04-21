@@ -134,34 +134,45 @@ class TypeAnalysis(program: AProgram)(implicit declData: DeclarationData)
             unify(id, as.right)
           case dw: ADerefWrite =>
             unify(dw.exp, PointerType(as.right))
-          case dfw: ADirectFieldWrite   => ??? // <--- Complete here
+          case dfw: ADirectFieldWrite   => 
+            unify(
+              dfw.id,
+              RecordType(
+                allFieldNames.map {
+                  field =>
+                    if (field == dfw.field) VarType(as.right)
+                    else FreshVarType()
+                }
+              )
+            )
           case ifw: AIndirectFieldWrite => ??? // <--- Complete here
         }
       case bin: ABinaryOp =>
         bin.operator match {
           case Eqq =>
-            // Whole expr is int
-            unify(bin, IntType())
             // Their type is also equal
             unify(bin.left, bin.right)
+            // Whole expr is int
+            unify(node, IntType())
           case _ =>
             // All are int
             unify(bin.left, IntType())
             unify(bin.right, IntType())
-            unify(bin, IntType())
+            unify(node, IntType())
         }
       case un: AUnaryOp =>
         un.operator match {
           case DerefOp =>
-            unify(un.subexp, PointerType(un))
+            unify(un.subexp, PointerType(node))
         }
       case alloc: AAlloc =>
-        unify(alloc, PointerType(alloc.exp))
+        unify(node, PointerType(alloc.exp))
       case ref: AVarRef =>
-        unify(ref, VarType(ref.id))
+        unify(node, VarType(ref.id))
       case _: ANull =>
+        unify(node, PointerType(FreshVarType()))
       case fun: AFunDeclaration =>
-        unify(fun, FunctionType(fun.params, fun.stmts.ret.exp))
+        unify(node, FunctionType(fun.params, fun.stmts.ret.exp))
       case call: ACallFuncExpr =>
         unify(call.targetFun, FunctionType(call.args, call))
       case _: AReturnStmt =>
@@ -173,7 +184,7 @@ class TypeAnalysis(program: AProgram)(implicit declData: DeclarationData)
         val typeToUnify = RecordType(allFieldNames.map { field =>
           fieldmap.getOrElse(field, AbsentFieldType)
         })
-        unify(rec, typeToUnify)
+        unify(node, typeToUnify)
       case ac: AFieldAccess =>
         unify(
           ac.record,
