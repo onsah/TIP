@@ -29,7 +29,8 @@ object SymbolicValues extends ValueSpecification {
   /**
     * Record value.
     */
-  case class ConcreteRecordValue(fields: Map[String, EValue]) extends RecordValue
+  case class ConcreteRecordValue(fields: Map[String, EValue])
+      extends RecordValue
 
   val nullValue = ConcreteNullValue()
 
@@ -38,13 +39,16 @@ object SymbolicValues extends ValueSpecification {
   /**
     * Creates a new reference
     */
-  def newLoc(): ReferenceValue = { lastLoc += 1; ConcreteReferenceValue(lastLoc) }
+  def newLoc(): ReferenceValue = {
+    lastLoc += 1; ConcreteReferenceValue(lastLoc)
+  }
 
   def constInt(i: Int): IntValue = SymbIntValue(i, ANumber(i, noLoc))
 
   def eqq(x: EValue, y: EValue): IntValue = (x, y) match {
     case (i1: SymbIntValue, i2: SymbIntValue) =>
-      SymbIntValue(if (i1.i == i2.i) 1 else 0, ABinaryOp(Eqq, i1.symbolic, i2.symbolic, noLoc))
+      SymbIntValue(if (i1.i == i2.i) 1 else 0,
+                   ABinaryOp(Eqq, i1.symbolic, i2.symbolic, noLoc))
     case (x: EValue, y: EValue) =>
       // Equality of non-number is not supported by the solver, use concrete symbolic value.
       // Concolic testing becomes incomplete
@@ -65,7 +69,8 @@ object SymbolicValues extends ValueSpecification {
   }
   def greatThanInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
     case (x: SymbIntValue, y: SymbIntValue) =>
-      SymbIntValue(if (x.i > y.i) 1 else 0, ABinaryOp(GreatThan, x.symbolic, y.symbolic, noLoc))
+      SymbIntValue(if (x.i > y.i) 1 else 0,
+                   ABinaryOp(GreatThan, x.symbolic, y.symbolic, noLoc))
     case _ => ???
   }
   def timesInt(x: IntValue, y: IntValue): IntValue = (x, y) match {

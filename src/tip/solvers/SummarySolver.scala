@@ -12,15 +12,20 @@ import scala.collection.immutable.Set
   * @tparam D the type of items
   * @tparam L the type of the value lattice
   */
-abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
+abstract class SummarySolver[D, L <: Lattice](
+    val cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
     extends FlowSensitiveAnalysis(false)
     with IDEAnalysis[D, L] {
 
-  class Phase1(val cfg: InterproceduralProgramCfg) extends WorklistFixpointPropagationSolver[CfgNode] with ForwardDependencies {
+  class Phase1(val cfg: InterproceduralProgramCfg)
+      extends WorklistFixpointPropagationSolver[CfgNode]
+      with ForwardDependencies {
 
-    val statelattice = new EdgeEnvLattice[D, valuelattice.type, edgelattice.type](edgelattice)
+    val statelattice =
+      new EdgeEnvLattice[D, valuelattice.type, edgelattice.type](edgelattice)
 
-    val lattice = new MapLattice[CfgNode, LiftLattice[statelattice.type]](new LiftLattice(statelattice))
+    val lattice = new MapLattice[CfgNode, LiftLattice[statelattice.type]](
+      new LiftLattice(statelattice))
 
     import cfg._
     import lattice.sublattice.{lift, Lift}
@@ -31,7 +36,8 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
       */
     val first = Set(programEntry)
 
-    override val init = lift(Map((Right(Lambda()), Right(Lambda())) -> IdEdge()))
+    override val init = lift(
+      Map((Right(Lambda()), Right(Lambda())) -> IdEdge()))
 
     import statelattice._
 
@@ -55,10 +61,12 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
           compose2(s, edgesOther(n))
       }
 
-    private def propagateReturn(funexit: CfgFunExitNode, aftercall: CfgAfterCallNode): Element =
+    private def propagateReturn(funexit: CfgFunExitNode,
+                                aftercall: CfgAfterCallNode): Element =
       x(aftercall.callNode) match {
         case Lift(s1) =>
-          val s2 = compose2(s1, edgesCallToEntry(aftercall.callNode, funexit.entry))
+          val s2 =
+            compose2(s1, edgesCallToEntry(aftercall.callNode, funexit.entry))
           x(funexit) match {
             case Lift(s) =>
               val s3 = compose(s2, s)
@@ -72,7 +80,8 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
       }
   }
 
-  class Phase2(val cfg: InterproceduralProgramCfg, val phase1: Phase1) extends WorklistFixpointPropagationFunctions[CfgNode] {
+  class Phase2(val cfg: InterproceduralProgramCfg, val phase1: Phase1)
+      extends WorklistFixpointPropagationFunctions[CfgNode] {
 
     val statelattice = new MapLattice[D, valuelattice.type](valuelattice)
 
@@ -95,7 +104,8 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
             propagate(sublattice.apply(unlift(phase1.x(call)), s), call)
         case call: CfgCallNode =>
           for (funentry <- call.callees)
-            propagate(sublattice.apply(edgesCallToEntry(call, funentry) _, s), funentry)
+            propagate(sublattice.apply(edgesCallToEntry(call, funentry) _, s),
+                      funentry)
         case _ =>
       }
     }
@@ -105,7 +115,8 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
       nodes.foreach {
         case _: CfgFunEntryNode | _: CfgCallNode => // already processed
         case n =>
-          x += n -> sublattice.apply(unlift(phase1.x(n)), x(enclosingFunctionEntry(n)))
+          x += n -> sublattice.apply(unlift(phase1.x(n)),
+                                     x(enclosingFunctionEntry(n)))
       }
       x
     }
@@ -115,11 +126,13 @@ abstract class SummarySolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg
     FixpointSolvers.log.verb(s"Summary pre-analysis")
     val p1 = new Phase1(cfg)
     val res1 = p1.analyze()
-    FixpointSolvers.log.verb(s"Result from pre-analysis:\n  ${res1.mkString("\n  ")}")
+    FixpointSolvers.log.verb(
+      s"Result from pre-analysis:\n  ${res1.mkString("\n  ")}")
     FixpointSolvers.log.verb(s"Main analysis")
     val p2 = new Phase2(cfg, p1)
     val res2 = p2.analyze()
-    FixpointSolvers.log.verb(s"Result from main analysis:\n  ${res2.mkString("\n  ")}")
+    FixpointSolvers.log.verb(
+      s"Result from main analysis:\n  ${res2.mkString("\n  ")}")
     res2
   }
 }

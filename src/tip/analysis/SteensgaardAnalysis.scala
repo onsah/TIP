@@ -11,7 +11,9 @@ import scala.language.implicitConversions
   * The analysis associates an [[StTerm]] with each variable declaration and expression node in the AST.
   * It is implemented using [[tip.solvers.UnionFindSolver]].
   */
-class SteensgaardAnalysis(program: AProgram)(implicit declData: DeclarationData) extends DepthFirstAstVisitor[Unit] with PointsToAnalysis {
+class SteensgaardAnalysis(program: AProgram)(implicit declData: DeclarationData)
+    extends DepthFirstAstVisitor[Unit]
+    with PointsToAnalysis {
 
   val log = Log.logger[this.type]()
 
@@ -34,16 +36,24 @@ class SteensgaardAnalysis(program: AProgram)(implicit declData: DeclarationData)
     */
   def visit(node: AstNode, arg: Unit): Unit = {
 
-    implicit def identifierToTerm(id: AIdentifier): Term[StTerm] = IdentifierVariable(id)
+    implicit def identifierToTerm(id: AIdentifier): Term[StTerm] =
+      IdentifierVariable(id)
     implicit def allocToTerm(alloc: AAlloc): Term[StTerm] = AllocVariable(alloc)
 
     log.verb(s"Visiting ${node.getClass.getSimpleName} at ${node.loc}")
     node match {
-      case AAssignStmt(id1: AIdentifier, alloc: AAlloc, _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, AVarRef(id2: AIdentifier, _), _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, id2: AIdentifier, _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, AUnaryOp(DerefOp, id2: AIdentifier, _), _) => ??? //<--- Complete here
-      case AAssignStmt(ADerefWrite(id1: AIdentifier, _), id2: AIdentifier, _) => ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier, alloc: AAlloc, _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier, AVarRef(id2: AIdentifier, _), _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier, id2: AIdentifier, _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier,
+                       AUnaryOp(DerefOp, id2: AIdentifier, _),
+                       _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(ADerefWrite(id1: AIdentifier, _), id2: AIdentifier, _) =>
+        ??? //<--- Complete here
       case _ => // ignore other kinds of nodes
     }
     visitChildren(node, ())
@@ -61,19 +71,25 @@ class SteensgaardAnalysis(program: AProgram)(implicit declData: DeclarationData)
     val solution = solver.solution()
     val unifications = solver.unifications()
     log.info(s"Solution: \n${solution.mkString(",\n")}")
-    log.info(s"Sets: \n${unifications.values.map { s =>
-      s"{ ${s.mkString(",")} }"
-    }.mkString(", ")}")
+    log.info(s"Sets: \n${unifications.values
+      .map { s =>
+        s"{ ${s.mkString(",")} }"
+      }
+      .mkString(", ")}")
 
     val vars = solution.keys.collect { case id: IdentifierVariable => id }
     val pointsto = vars.foldLeft(Map[ADeclaration, Set[AstNode]]()) {
       case (a, v: IdentifierVariable) =>
         val pt = unifications(solution(v))
-          .collect({ case PointerRef(IdentifierVariable(id)) => id; case PointerRef(AllocVariable(alloc)) => alloc })
+          .collect({
+            case PointerRef(IdentifierVariable(id)) => id;
+            case PointerRef(AllocVariable(alloc))   => alloc
+          })
           .toSet
         a + (v.id -> pt)
     }
-    log.info(s"Points-to:\n${pointsto.map(p => s"${p._1} -> { ${p._2.mkString(",")} }").mkString("\n")}")
+    log.info(
+      s"Points-to:\n${pointsto.map(p => s"${p._1} -> { ${p._2.mkString(",")} }").mkString("\n")}")
     pointsto
   }
 
@@ -85,7 +101,8 @@ class SteensgaardAnalysis(program: AProgram)(implicit declData: DeclarationData)
     (id1: ADeclaration, id2: ADeclaration) =>
       val sol1 = solution(IdentifierVariable(id1))
       val sol2 = solution(IdentifierVariable(id2))
-      sol1 == sol2 && sol1.isInstanceOf[PointerRef] // same equivalence class, and it contains a reference
+      sol1 == sol2 && sol1
+        .isInstanceOf[PointerRef] // same equivalence class, and it contains a reference
   }
 }
 
@@ -118,7 +135,9 @@ case class AllocVariable(alloc: AAlloc) extends StTerm with Var[StTerm] {
 /**
   * A term variable that represents an identifier in the program.
   */
-case class IdentifierVariable(id: ADeclaration) extends StTerm with Var[StTerm] {
+case class IdentifierVariable(id: ADeclaration)
+    extends StTerm
+    with Var[StTerm] {
 
   override def toString: String = s"\u27E6$id\u27E7"
 }
@@ -140,7 +159,8 @@ case class PointerRef(of: Term[StTerm]) extends StTerm with Cons[StTerm] {
 
   val args: List[Term[StTerm]] = List(of)
 
-  def subst(v: Var[StTerm], t: Term[StTerm]): Term[StTerm] = PointerRef(of.subst(v, t))
+  def subst(v: Var[StTerm], t: Term[StTerm]): Term[StTerm] =
+    PointerRef(of.subst(v, t))
 
   override def toString: String = s"\u2B61$of"
 }

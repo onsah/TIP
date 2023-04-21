@@ -12,7 +12,8 @@ import scala.collection.mutable
 /**
   * Micro-transfer-functions for possibly-uninitialized variables analysis.
   */
-trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaration, TwoElementLattice] {
+trait PossiblyUninitializedVarsAnalysisFunctions
+    extends IDEAnalysis[ADeclaration, TwoElementLattice] {
 
   NoPointers.assertContainsProgram(cfg.prog)
   NoRecords.assertContainsProgram(cfg.prog)
@@ -27,19 +28,26 @@ trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaratio
   import edgelattice._
   import edgelattice.valuelattice._
 
-  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
-    entry.data.params.zip(call.invocation.args).foldLeft(Map[DL, edgelattice.EdgeFunction]()) {
-      case (acc, (id, exp)) =>
-        acc ++ assign(d, id, exp)
-    }
+  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
+    entry.data.params
+      .zip(call.invocation.args)
+      .foldLeft(Map[DL, edgelattice.EdgeFunction]()) {
+        case (acc, (id, exp)) =>
+          acc ++ assign(d, id, exp)
+      }
 
-  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
+  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
     assign(d, aftercall.targetIdentifier.declaration, AstOps.returnId)
 
-  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
+  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
     d match {
       case Right(_) => Map(d -> IdEdge())
-      case Left(a) => if (a == aftercall.targetIdentifier.declaration) Map() else Map(d -> IdEdge())
+      case Left(a) =>
+        if (a == aftercall.targetIdentifier.declaration) Map()
+        else Map(d -> IdEdge())
     }
 
   def edgesOther(n: CfgNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
@@ -51,8 +59,9 @@ trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaratio
           case varr: AVarStmt =>
             d match {
               case Right(_) =>
-                varr.declIds.foldLeft(Map(d -> IdEdge()): Map[DL, EdgeFunction]) { (ps, id) => // identity edge from lambda to lambda
-                  ps + (Left(id) -> ConstEdge(Top)) // top edge from lambda to each variable being declared
+                varr.declIds.foldLeft(Map(d -> IdEdge()): Map[DL, EdgeFunction]) {
+                  (ps, id) => // identity edge from lambda to lambda
+                    ps + (Left(id) -> ConstEdge(Top)) // top edge from lambda to each variable being declared
                 }
               case Left(a) =>
                 if (varr.declIds.contains(a))
@@ -72,7 +81,9 @@ trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaratio
                   case _ =>
                     edges
                 }
-              case AAssignStmt(_, _, _) => NoPointers.LanguageRestrictionViolation(s"$as not allowed", as.loc)
+              case AAssignStmt(_, _, _) =>
+                NoPointers.LanguageRestrictionViolation(s"$as not allowed",
+                                                        as.loc)
             }
 
           // return statement
@@ -88,7 +99,10 @@ trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaratio
   /**
     * Micro-transfer-functions for assigning an expression to an identifier.
     */
-  private def assign(d: DL, id: ADeclaration, exp: AExprOrIdentifierDeclaration): Map[DL, edgelattice.EdgeFunction] = {
+  private def assign(
+      d: DL,
+      id: ADeclaration,
+      exp: AExprOrIdentifierDeclaration): Map[DL, edgelattice.EdgeFunction] = {
     val edges = mutable.ListBuffer[(DL, EdgeFunction)]()
     d match {
       case Right(_) =>
@@ -105,13 +119,15 @@ trait PossiblyUninitializedVarsAnalysisFunctions extends IDEAnalysis[ADeclaratio
 /**
   * Possibly-uninitialized variables analysis using IDE solver.
   */
-class PossiblyUninitializedVarsIDEAnalysis(cfg: InterproceduralProgramCfg)(implicit val declData: DeclarationData)
+class PossiblyUninitializedVarsIDEAnalysis(cfg: InterproceduralProgramCfg)(
+    implicit val declData: DeclarationData)
     extends IDESolver[ADeclaration, TwoElementLattice](cfg)
     with PossiblyUninitializedVarsAnalysisFunctions
 
 /**
   * Possibly-uninitialized variables analysis using summary solver.
   */
-class PossiblyUninitializedVarsSummaryAnalysis(cfg: InterproceduralProgramCfg)(implicit val declData: DeclarationData)
+class PossiblyUninitializedVarsSummaryAnalysis(cfg: InterproceduralProgramCfg)(
+    implicit val declData: DeclarationData)
     extends SummarySolver[ADeclaration, TwoElementLattice](cfg)
     with PossiblyUninitializedVarsAnalysisFunctions

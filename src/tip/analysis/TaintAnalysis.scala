@@ -9,7 +9,8 @@ import tip.solvers._
 /**
   * Micro-transfer-functions for taint analysis.
   */
-trait TaintAnalysisFunctions extends IDEAnalysis[ADeclaration, TwoElementLattice] {
+trait TaintAnalysisFunctions
+    extends IDEAnalysis[ADeclaration, TwoElementLattice] {
 
   NoPointers.assertContainsProgram(cfg.prog)
   NoRecords.assertContainsProgram(cfg.prog)
@@ -23,19 +24,26 @@ trait TaintAnalysisFunctions extends IDEAnalysis[ADeclaration, TwoElementLattice
   import cfg._
   import edgelattice._
 
-  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
-    entry.data.params.zip(call.invocation.args).foldLeft(Map[DL, edgelattice.EdgeFunction]()) {
-      case (acc, (id, exp)) =>
-        acc ++ assign(d, id, exp)
-    }
+  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
+    entry.data.params
+      .zip(call.invocation.args)
+      .foldLeft(Map[DL, edgelattice.EdgeFunction]()) {
+        case (acc, (id, exp)) =>
+          acc ++ assign(d, id, exp)
+      }
 
-  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
+  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
     assign(d, aftercall.targetIdentifier.declaration, AstOps.returnId)
 
-  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
+  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.EdgeFunction] =
     d match {
       case Right(_) => Map(d -> IdEdge())
-      case Left(a) => if (a == aftercall.targetIdentifier.declaration) Map() else Map(d -> IdEdge())
+      case Left(a) =>
+        if (a == aftercall.targetIdentifier.declaration) Map()
+        else Map(d -> IdEdge())
     }
 
   def edgesOther(n: CfgNode)(d: DL): Map[DL, edgelattice.EdgeFunction] =
@@ -54,7 +62,9 @@ trait TaintAnalysisFunctions extends IDEAnalysis[ADeclaration, TwoElementLattice
                   case _ =>
                     edges
                 }
-              case AAssignStmt(_, _, _) => NoPointers.LanguageRestrictionViolation(s"$as not allowed", as.loc)
+              case AAssignStmt(_, _, _) =>
+                NoPointers.LanguageRestrictionViolation(s"$as not allowed",
+                                                        as.loc)
             }
 
           // return statement
@@ -70,19 +80,25 @@ trait TaintAnalysisFunctions extends IDEAnalysis[ADeclaration, TwoElementLattice
   /**
     * Micro-transfer-functions for assigning an expression to an identifier.
     */
-  private def assign(d: DL, id: ADeclaration, exp: AExprOrIdentifierDeclaration): Map[DL, edgelattice.EdgeFunction] = ??? //<--- Complete here
+  private def assign(
+      d: DL,
+      id: ADeclaration,
+      exp: AExprOrIdentifierDeclaration): Map[DL, edgelattice.EdgeFunction] =
+    ??? //<--- Complete here
 }
 
 /**
   * Taint analysis using IDE solver.
   */
-class TaintIDEAnalysis(cfg: InterproceduralProgramCfg)(implicit val declData: DeclarationData)
+class TaintIDEAnalysis(cfg: InterproceduralProgramCfg)(
+    implicit val declData: DeclarationData)
     extends IDESolver[ADeclaration, TwoElementLattice](cfg)
     with TaintAnalysisFunctions
 
 /**
   * Taint analysis using summary solver.
   */
-class TaintSummaryAnalysis(cfg: InterproceduralProgramCfg)(implicit val declData: DeclarationData)
+class TaintSummaryAnalysis(cfg: InterproceduralProgramCfg)(
+    implicit val declData: DeclarationData)
     extends SummarySolver[ADeclaration, TwoElementLattice](cfg)
     with TaintAnalysisFunctions

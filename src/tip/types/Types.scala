@@ -18,13 +18,15 @@ object Type {
     * function will be invoked implicitly to make the conversion (provided that the function is imported).
     * For more information about implicit conversions in Scala, see [[https://docs.scala-lang.org/tour/implicit-conversions.html]].
     */
-  implicit def ast2typevar(node: AstNode)(implicit declData: DeclarationData): Var[Type] =
+  implicit def ast2typevar(node: AstNode)(
+      implicit declData: DeclarationData): Var[Type] =
     node match {
       case id: AIdentifier => VarType(declData(id))
-      case _ => VarType(node)
+      case _               => VarType(node)
     }
 
-  implicit def ast2typevar(nodes: List[AstNode])(implicit declData: DeclarationData): List[Var[Type]] =
+  implicit def ast2typevar(nodes: List[AstNode])(
+      implicit declData: DeclarationData): List[Var[Type]] =
     nodes.map(ast2typevar)
 }
 
@@ -68,7 +70,9 @@ case class IntType() extends Type with Cons[Type] {
 /**
   * Function type.
   */
-case class FunctionType(params: List[Term[Type]], ret: Term[Type]) extends Type with Cons[Type] {
+case class FunctionType(params: List[Term[Type]], ret: Term[Type])
+    extends Type
+    with Cons[Type] {
 
   val args: List[Term[Type]] = ret :: params
 
@@ -87,7 +91,8 @@ case class PointerType(of: Term[Type]) extends Type with Cons[Type] {
 
   val args: List[Term[Type]] = List(of)
 
-  def subst(v: Var[Type], t: Term[Type]): Term[Type] = PointerType(of.subst(v, t))
+  def subst(v: Var[Type], t: Term[Type]): Term[Type] =
+    PointerType(of.subst(v, t))
 
   override def toString: String = s"\u2B61$of"
 }
@@ -98,7 +103,10 @@ case class PointerType(of: Term[Type]) extends Type with Cons[Type] {
   * A record type is represented as a term with a sub-term for every field name in the entire program.
   * (This could be represented more concisely by using AbsentFieldType as a default.)
   */
-case class RecordType(args: List[Term[Type]])(implicit allFieldNames: List[String]) extends Type with Cons[Type] {
+case class RecordType(args: List[Term[Type]])(
+    implicit allFieldNames: List[String])
+    extends Type
+    with Cons[Type] {
 
   def subst(v: Var[Type], t: Term[Type]): Term[Type] =
     RecordType(args.map { p =>
@@ -128,7 +136,8 @@ case object AbsentFieldType extends Type with Cons[Type] {
   */
 case class VarType(node: AstNode) extends Type with Var[Type] {
 
-  require(!node.isInstanceOf[AIdentifier], "Trying to construct type variable for identifier expression");
+  require(!node.isInstanceOf[AIdentifier],
+          "Trying to construct type variable for identifier expression");
 
   override def toString: String = s"\u27E6$node\u27E7"
 }
@@ -146,7 +155,9 @@ case class FreshVarType(var id: Int = 0) extends Type with Var[Type] {
 /**
   * Recursive type (only created when closing terms).
   */
-case class RecursiveType(v: Var[Type], t: Term[Type]) extends Type with Mu[Type] {
+case class RecursiveType(v: Var[Type], t: Term[Type])
+    extends Type
+    with Mu[Type] {
 
   def subst(sv: Var[Type], to: Term[Type]): Term[Type] =
     if (sv == v) this else RecursiveType(v, t.subst(sv, to))

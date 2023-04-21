@@ -5,31 +5,40 @@ import tip.ast.AProgram
 import tip.util.Log
 import SMTSolver.Symbol
 
-class ConcolicEngine(val program: AProgram)(implicit declData: DeclarationData) extends SymbolicInterpreter(program) {
+class ConcolicEngine(val program: AProgram)(implicit declData: DeclarationData)
+    extends SymbolicInterpreter(program) {
 
   override val log = Log.logger[this.type]()
 
-  def nextExplorationTarget(lastExplored: ExecutionTree, root: ExecutionTreeRoot): Option[(Branch, Boolean)] =
+  def nextExplorationTarget(
+      lastExplored: ExecutionTree,
+      root: ExecutionTreeRoot): Option[(Branch, Boolean)] =
     lastExplored.parent match {
       case b: Branch =>
         (b.branches(true), b.branches(false)) match {
-          case (_: SubTreePlaceholder, _) if b.count(true) == 0 => Some((b, true))
-          case (_, _: SubTreePlaceholder) if b.count(false) == 0 => Some((b, false))
+          case (_: SubTreePlaceholder, _) if b.count(true) == 0 =>
+            Some((b, true))
+          case (_, _: SubTreePlaceholder) if b.count(false) == 0 =>
+            Some((b, false))
           case (_, _) => nextExplorationTarget(b, root)
         }
       case _ => None
     }
 
-  def newInputs(symbols: List[Symbol], lastNode: ExecutionTree, root: ExecutionTreeRoot): Option[List[Int]] = {
+  def newInputs(symbols: List[Symbol],
+                lastNode: ExecutionTree,
+                root: ExecutionTreeRoot): Option[List[Int]] = {
     if (lastNode == root) {
       log.info("Program never branches")
       return None
     }
     val target = nextExplorationTarget(lastNode, root)
-    log.info(s"Execution tree status: \n${ExecutionTreePrinter.printExecutionTree(root)}")
+    log.info(
+      s"Execution tree status: \n${ExecutionTreePrinter.printExecutionTree(root)}")
     target match {
       case Some((targetNode, value)) =>
-        val pc = targetNode.pathCondition(List((targetNode.symcondition, value)))
+        val pc =
+          targetNode.pathCondition(List((targetNode.symcondition, value)))
         log.info(s"Path condition for next run: $pc")
         val smt = SMTSolver.pathToSMT(symbols, pc)
         log.info(s"SMT script for next run: \n$smt")
@@ -40,7 +49,13 @@ class ConcolicEngine(val program: AProgram)(implicit declData: DeclarationData) 
             newInputs(symbols, lastNode, root)
           case Some(mapping) =>
             log.info(s"Model: $mapping")
-            Some(symbols.map(v => mapping.get(v.name).map(_.toInt).getOrElse(scala.util.Random.nextInt)))
+            Some(
+              symbols.map(
+                v =>
+                  mapping
+                    .get(v.name)
+                    .map(_.toInt)
+                    .getOrElse(scala.util.Random.nextInt)))
         }
       case _ => None
     }
@@ -88,13 +103,16 @@ class ConcolicEngine(val program: AProgram)(implicit declData: DeclarationData) 
     reportExplorationStatistics(results)
   }
 
-  private def reportExplorationStatistics(results: List[ExecutionResult]): Unit = {
+  private def reportExplorationStatistics(
+      results: List[ExecutionResult]): Unit = {
     val successes = results.collect { case s: ExSuccess => s }
     log.info(s"Found ${successes.length} successful input sequences")
-    successes.foreach(s => log.info(s"Input sequence ${s.usedInputs} produces: \n${s.value}"))
+    successes.foreach(s =>
+      log.info(s"Input sequence ${s.usedInputs} produces: \n${s.value}"))
     val failures = results.collect { case f: ExFailure => f }
     log.info(s"Found ${failures.length} failure-inducing input sequences.")
-    failures.foreach(f => log.info(s"Input sequence ${f.usedInputs} fails: \n${f.message}."))
+    failures.foreach(f =>
+      log.info(s"Input sequence ${f.usedInputs} fails: \n${f.message}."))
   }
 
   abstract class ExecutionResult(val concolicState: ConcolicState) {
@@ -105,6 +123,7 @@ class ConcolicEngine(val program: AProgram)(implicit declData: DeclarationData) 
 
   case class ExSuccess(s: ConcolicState, value: Int) extends ExecutionResult(s)
 
-  case class ExFailure(s: ConcolicState, message: String) extends ExecutionResult(s)
+  case class ExFailure(s: ConcolicState, message: String)
+      extends ExecutionResult(s)
 
 }

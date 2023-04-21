@@ -11,7 +11,8 @@ object FragmentCfg {
   /**
     * Generates a CFG for each function in the given program.
     */
-  def generateFromProgram(prog: AProgram, nodeBuilder: CfgNode => FragmentCfg)(implicit declData: DeclarationData): Map[AFunDeclaration, FragmentCfg] =
+  def generateFromProgram(prog: AProgram, nodeBuilder: CfgNode => FragmentCfg)(
+      implicit declData: DeclarationData): Map[AFunDeclaration, FragmentCfg] =
     prog.funs.map { f =>
       f -> FragmentCfg.generateFromFunction(f, nodeBuilder)
     }.toMap
@@ -31,7 +32,8 @@ object FragmentCfg {
   /**
     * Generates a CFG from the body of a function.
     */
-  def generateFromFunction(fun: AFunDeclaration, nodeBuilder: CfgNode => FragmentCfg): FragmentCfg = {
+  def generateFromFunction(fun: AFunDeclaration,
+                           nodeBuilder: CfgNode => FragmentCfg): FragmentCfg = {
 
     def recGen(node: AstNode): FragmentCfg =
       node match {
@@ -84,7 +86,8 @@ object FragmentCfg {
   *
   * @see [[tip.cfg.InterproceduralProgramCfg]], [[tip.cfg.IntraproceduralProgramCfg]]
   */
-class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode], private[cfg] val graphExits: Set[CfgNode]) {
+class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode],
+                  private[cfg] val graphExits: Set[CfgNode]) {
 
   /**
     * Returns true if this is the unit CFG w.r.t. to concatenation.
@@ -109,7 +112,8 @@ class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode], private[cfg] val 
     * Returns the union of this CFG with `other`.
     */
   def |(other: FragmentCfg): FragmentCfg =
-    new FragmentCfg(other.graphEntries.union(graphEntries), other.graphExits.union(graphExits))
+    new FragmentCfg(other.graphEntries.union(graphEntries),
+                    other.graphExits.union(graphExits))
 
   /**
     * Returns the set of nodes in the CFG.
@@ -119,7 +123,9 @@ class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode], private[cfg] val 
       nodesRec(entry).toSet
     }
 
-  protected def nodesRec(n: CfgNode, visited: mutable.Set[CfgNode] = mutable.Set()): mutable.Set[CfgNode] = {
+  protected def nodesRec(
+      n: CfgNode,
+      visited: mutable.Set[CfgNode] = mutable.Set()): mutable.Set[CfgNode] = {
     if (!visited.contains(n)) {
       visited += n
       n.succ.foreach { n =>
@@ -136,11 +142,14 @@ class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode], private[cfg] val 
     * visit of the control-flow graph
     */
   lazy val rank: Map[CfgNode, Int] = {
-    def rankRec(elems: List[CfgNode], visited: List[List[CfgNode]], level: Int): Map[CfgNode, Int] = {
+    def rankRec(elems: List[CfgNode],
+                visited: List[List[CfgNode]],
+                level: Int): Map[CfgNode, Int] = {
       val curLevel = elems.map { x =>
         x -> level
       }.toMap
-      val newNeighbors = elems.flatMap(_.succ).filterNot(visited.flatten.contains).distinct
+      val newNeighbors =
+        elems.flatMap(_.succ).filterNot(visited.flatten.contains).distinct
       if (newNeighbors.isEmpty)
         Map() ++ curLevel
       else
@@ -177,5 +186,7 @@ class FragmentCfg(private[cfg] val graphEntries: Set[CfgNode], private[cfg] val 
   * @param funEntries map from AST function declarations to CFG function entry nodes
   * @param funExits map from AST function declarations to CFG function exit nodes
   */
-abstract class ProgramCfg(val prog: AProgram, val funEntries: Map[AFunDeclaration, CfgFunEntryNode], val funExits: Map[AFunDeclaration, CfgFunExitNode])
+abstract class ProgramCfg(val prog: AProgram,
+                          val funEntries: Map[AFunDeclaration, CfgFunEntryNode],
+                          val funExits: Map[AFunDeclaration, CfgFunExitNode])
     extends FragmentCfg(funEntries.values.toSet, funExits.values.toSet)

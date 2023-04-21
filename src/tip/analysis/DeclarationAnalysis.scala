@@ -9,7 +9,9 @@ import tip.util.TipProgramException
   *
   * @see [[tip.ast.AstNodeData]]
   */
-class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[String, ADeclaration]] with Analysis[AstNodeData.DeclarationData] {
+class DeclarationAnalysis(prog: AProgram)
+    extends DepthFirstAstVisitor[Map[String, ADeclaration]]
+    with Analysis[AstNodeData.DeclarationData] {
 
   private var declResult: AstNodeData.DeclarationData = Map()
 
@@ -35,7 +37,7 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
         // Extend the environment with the initial declarations in the block, if present
         val ext = block match {
           case fblock: AFunBlockStmt => peekDecl(fblock.declarations)
-          case _: ANestedBlockStmt => Map[String, ADeclaration]()
+          case _: ANestedBlockStmt   => Map[String, ADeclaration]()
         }
         // Extend the env
         val extendedEnv = extendEnv(env, ext)
@@ -45,16 +47,18 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
         }
       case funDec: AFunDeclaration =>
         // Associate to each parameter itself as definition
-        val argsMap = funDec.params.foldLeft(Map[String, ADeclaration]()) { (acc, cur: AIdentifierDeclaration) =>
-          extendEnv(acc, cur.name -> cur)
+        val argsMap = funDec.params.foldLeft(Map[String, ADeclaration]()) {
+          (acc, cur: AIdentifierDeclaration) =>
+            extendEnv(acc, cur.name -> cur)
         }
         // Visit the function body in the extended environment
         val extendedEnv = extendEnv(env, argsMap)
         visit(funDec.stmts, extendedEnv)
       case p: AProgram =>
         // There can be mutually recursive functions, so pre-bind all the functions to their definitions before visiting each of them
-        val extended = p.funs.foldLeft(Map[String, ADeclaration]()) { (accEnv, fd: AFunDeclaration) =>
-          extendEnv(accEnv, fd.name -> fd)
+        val extended = p.funs.foldLeft(Map[String, ADeclaration]()) {
+          (accEnv, fd: AFunDeclaration) =>
+            extendEnv(accEnv, fd.name -> fd)
         }
         p.funs.foreach { fd =>
           visit(fd, extended)
@@ -65,25 +69,29 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
           declResult += ident -> env(name)
         } catch {
           case _: Exception =>
-            throw new DeclarationError(s"Identifier ${ident.name} not declared ${loc.toStringLong}")
+            throw new DeclarationError(
+              s"Identifier ${ident.name} not declared ${loc.toStringLong}")
         }
       case AAssignStmt(id: AIdentifier, _, loc) =>
         if (env.contains(id.name)) {
           env(id.name) match {
             case f: AFunDeclaration =>
-              throw new DeclarationError(s"Function $f cannot appear on the left-hand side of an assignment ${loc.toStringLong}")
+              throw new DeclarationError(
+                s"Function $f cannot appear on the left-hand side of an assignment ${loc.toStringLong}")
             case _ =>
           }
         }
         visitChildren(node, env)
       case AVarRef(id, loc) =>
         if (env.contains(id.name) && env(id.name).isInstanceOf[AFunDeclaration])
-          throw new DeclarationError(s"Cannot take address of function ${env(id.name)} ${loc.toStringLong}")
+          throw new DeclarationError(
+            s"Cannot take address of function ${env(id.name)} ${loc.toStringLong}")
         visitChildren(node, env)
       case ARecord(fields, _) =>
         fields.foldLeft(Set[String]())((s, f) => {
           if (s.contains(f.field))
-            throw new DeclarationError(s"Duplicate field name ${f.field} ${f.loc.toStringLong}")
+            throw new DeclarationError(
+              s"Duplicate field name ${f.field} ${f.loc.toStringLong}")
           s + f.field
         })
         visitChildren(node, env)
@@ -98,7 +106,8 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
     * @param ext the bindings to add
     * @return the extended environment if no conflict occurs, throws a DeclarationError otherwise
     */
-  def extendEnv(env: Map[String, ADeclaration], ext: Map[String, ADeclaration]): Map[String, ADeclaration] =
+  def extendEnv(env: Map[String, ADeclaration],
+                ext: Map[String, ADeclaration]): Map[String, ADeclaration] =
     ext.foldLeft(env)((e, p) => extendEnv(e, p))
 
   /**
@@ -107,9 +116,11 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
     * @param pair the binding to add
     * @return the extended environment if no conflict occurs, throws a DeclarationError otherwise
     */
-  def extendEnv(env: Map[String, ADeclaration], pair: (String, ADeclaration)): Map[String, ADeclaration] = {
+  def extendEnv(env: Map[String, ADeclaration],
+                pair: (String, ADeclaration)): Map[String, ADeclaration] = {
     if (env.contains(pair._1))
-      throw new DeclarationError(s"Redefinition of identifier ${pair._1} ${pair._2.loc.toStringLong}")
+      throw new DeclarationError(
+        s"Redefinition of identifier ${pair._1} ${pair._2.loc.toStringLong}")
     env + pair
   }
 
@@ -127,4 +138,5 @@ class DeclarationAnalysis(prog: AProgram) extends DepthFirstAstVisitor[Map[Strin
   }
 }
 
-class DeclarationError(message: String) extends TipProgramException(s"Symbol error: $message")
+class DeclarationError(message: String)
+    extends TipProgramException(s"Symbol error: $message")

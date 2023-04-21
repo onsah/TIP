@@ -59,9 +59,9 @@ trait InterproceduralForwardDependencies extends Dependencies[CfgNode] {
     */
   override def outdep(n: CfgNode): Set[CfgNode] = {
     val interDep = n match {
-      case call: CfgCallNode => call.callees
+      case call: CfgCallNode    => call.callees
       case exit: CfgFunExitNode => exit.callersAfterCall
-      case _ => Set()
+      case _                    => Set()
     }
     interDep ++ n.succ.toSet
   }
@@ -72,14 +72,15 @@ trait InterproceduralForwardDependencies extends Dependencies[CfgNode] {
   override def indep(n: CfgNode): Set[CfgNode] =
     n match {
       case _: CfgAfterCallNode => Set()
-      case _ => n.pred.toSet
+      case _                   => n.pred.toSet
     }
 }
 
 /**
   * Variant of [[ForwardDependencies]] for context-sensitive interprocedural analysis.
   */
-trait ContextSensitiveForwardDependencies[C <: CallContext] extends Dependencies[(C, CfgNode)] {
+trait ContextSensitiveForwardDependencies[C <: CallContext]
+    extends Dependencies[(C, CfgNode)] {
 
   val cfg: InterproceduralProgramCfg
 
@@ -90,7 +91,7 @@ trait ContextSensitiveForwardDependencies[C <: CallContext] extends Dependencies
   override def outdep(n: (C, CfgNode)): Set[(C, CfgNode)] =
     (n._2 match {
       case _: CfgCallNode => Set()
-      case _ => n._2.succ.toSet
+      case _              => n._2.succ.toSet
     }).map { d =>
       (n._1, d)
     }

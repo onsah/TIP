@@ -102,7 +102,9 @@ trait TermOps[A] {
     * @param env       environment, map from term variables to terms
     * @param freshvars map from recursive and unconstrained term variables to fresh term variables
     */
-  def close(t: Term[A], env: Map[Var[A], Term[A]], freshvars: mutable.Map[Var[A], Var[A]]): Term[A] = {
+  def close(t: Term[A],
+            env: Map[Var[A], Term[A]],
+            freshvars: mutable.Map[Var[A], Var[A]]): Term[A] = {
 
     def closeRec(t: Term[A], visited: Set[Var[A]] = Set()): Term[A] =
       t match {

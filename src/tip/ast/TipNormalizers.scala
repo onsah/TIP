@@ -9,7 +9,9 @@ class Normalizer {
   }
 
   /** The list of declarations that have to be added in the current function. */
-  val declarations: scala.collection.mutable.ListBuffer[AIdentifierDeclaration] = scala.collection.mutable.ListBuffer.empty
+  val declarations
+    : scala.collection.mutable.ListBuffer[AIdentifierDeclaration] =
+    scala.collection.mutable.ListBuffer.empty
 
   /**
     * Adds a declaration.
@@ -20,7 +22,8 @@ class Normalizer {
     * The list of statements to be added in the current block.
     * This will mostly be assignments but can be any statement that can be in a nested block.
     */
-  val statements: scala.collection.mutable.ListBuffer[AStmtInNestedBlock] = scala.collection.mutable.ListBuffer.empty
+  val statements: scala.collection.mutable.ListBuffer[AStmtInNestedBlock] =
+    scala.collection.mutable.ListBuffer.empty
 
   /**
     * Adds a statement.
@@ -33,10 +36,14 @@ class Normalizer {
   def normalizeExpr(e: AExpr): AExpr =
     e match {
       case _: AIdentifier => e
-      case uop: AUnaryOp => uop.copy(subexp = normalizeExpr(uop.subexp))
-      case bop: ABinaryOp => bop.copy(left = normalizeExpr(bop.left), right = normalizeExpr(bop.right))
+      case uop: AUnaryOp  => uop.copy(subexp = normalizeExpr(uop.subexp))
+      case bop: ABinaryOp =>
+        bop.copy(left = normalizeExpr(bop.left),
+                 right = normalizeExpr(bop.right))
       case r: ARecord => r.copy(fields = r.fields.map(normalizeRecordField))
-      case call: ACallFuncExpr => call.copy(targetFun = normalizeExpr(call.targetFun), args = call.args.map(normalizeExpr))
+      case call: ACallFuncExpr =>
+        call.copy(targetFun = normalizeExpr(call.targetFun),
+                  args = call.args.map(normalizeExpr))
       case _ => e
     }
 
@@ -50,7 +57,9 @@ class Normalizer {
         val tmpVar = newVariable()
         val id = AIdentifier(tmpVar, right.loc)
         addDeclaration(AIdentifierDeclaration(tmpVar, right.loc))
-        addStatement(normalizeStmtInNestedBlock(AAssignStmt(AIdentifier(tmpVar, right.loc), right, right.loc)))
+        addStatement(
+          normalizeStmtInNestedBlock(
+            AAssignStmt(AIdentifier(tmpVar, right.loc), right, right.loc)))
         id
     }
 
@@ -66,8 +75,8 @@ class Normalizer {
   def normalizeAssignable(e: Assignable): Assignable =
     e match {
       case _: AIdentifier | _: ADirectFieldWrite => e
-      case dw: ADerefWrite => dw.copy(exp = normalizeExpr(dw.exp))
-      case ifw: AIndirectFieldWrite => ifw.copy(exp = normalizeExpr(ifw.exp))
+      case dw: ADerefWrite                       => dw.copy(exp = normalizeExpr(dw.exp))
+      case ifw: AIndirectFieldWrite              => ifw.copy(exp = normalizeExpr(ifw.exp))
     }
 
   /**
@@ -86,21 +95,28 @@ class Normalizer {
   def normalizeStmtInNestedBlock(stmt: AStmtInNestedBlock): AStmtInNestedBlock =
     stmt match {
       case stmt: AAssignStmt =>
-        nestedBlock(stmt.copy(left = normalizeAssignable(stmt.left), right = normalizeExpr(stmt.right)))
+        nestedBlock(
+          stmt.copy(left = normalizeAssignable(stmt.left),
+                    right = normalizeExpr(stmt.right)))
       case stmt: ANestedBlockStmt =>
         stmt.copy(body = stmt.body.map(normalizeStmtInNestedBlock))
       case stmt: AIfStmt =>
         // It is important to first normalizes the if/else branches before calling nestedBlock, so that added statements for each branch remain in the corresponding branch, and added statements for the guard are added before the if.
         val ifBranch2 = normalizeStmtInNestedBlock(stmt.ifBranch)
         val elseBranch2 = stmt.elseBranch.map(normalizeStmtInNestedBlock)
-        nestedBlock(stmt.copy(guard = normalizeExpr(stmt.guard), ifBranch = ifBranch2, elseBranch = elseBranch2))
+        nestedBlock(
+          stmt.copy(guard = normalizeExpr(stmt.guard),
+                    ifBranch = ifBranch2,
+                    elseBranch = elseBranch2))
       case stmt: AOutputStmt =>
         nestedBlock(stmt.copy(exp = normalizeExpr(stmt.exp)))
       case stmt: AErrorStmt =>
         nestedBlock(stmt.copy(exp = normalizeExpr(stmt.exp)))
       case stmt: AWhileStmt =>
         val innerBlock2 = normalizeStmtInNestedBlock(stmt.innerBlock)
-        nestedBlock(stmt.copy(guard = normalizeExpr(stmt.guard), innerBlock = innerBlock2))
+        nestedBlock(
+          stmt.copy(guard = normalizeExpr(stmt.guard),
+                    innerBlock = innerBlock2))
     }
 
   /**
@@ -150,7 +166,8 @@ class Normalizer {
 /**
   * Combines two normalizers, running `normalizer1` followed by `normalizer2` on the input program.
   */
-class CombineNormalizers(normalizer1: Normalizer, normalizer2: Normalizer) extends Normalizer {
+class CombineNormalizers(normalizer1: Normalizer, normalizer2: Normalizer)
+    extends Normalizer {
   override def normalizeProgram(program: AProgram): AProgram =
     normalizer2.normalizeProgram(normalizer1.normalizeProgram(program))
 }
@@ -187,9 +204,11 @@ object CallsNormalizer extends Normalizer {
 
   def normalizeFunctionCall(f: ACallFuncExpr): ACallFuncExpr =
     // [[e(e1, e2, ...)]] becomes [[id(id1, id2, ...)]]
-    f.copy(targetFun = normalizeToIdentifier(f.targetFun), args = f.args.map(normalizeToIdentifier))
+    f.copy(targetFun = normalizeToIdentifier(f.targetFun),
+           args = f.args.map(normalizeToIdentifier))
 
-  override def normalizeStmtInNestedBlock(stmt: AStmtInNestedBlock): AStmtInNestedBlock =
+  override def normalizeStmtInNestedBlock(
+      stmt: AStmtInNestedBlock): AStmtInNestedBlock =
     stmt match {
       case AAssignStmt(left: AIdentifier, right: ACallFuncExpr, loc) =>
         // [[id = e(e1, e2, ...)]] form, normalize the call e(e1, e2, ...) to id(id1, id2, ...)
@@ -249,21 +268,25 @@ object PointersNormalizer extends Normalizer {
       case op: AUnaryOp =>
         op.copy(subexp = normalizeToIdentifier(op.subexp))
       case _: AIdentifier => right
-      case _: ANull => right
-      case _: AAlloc => right
-      case _ =>
+      case _: ANull       => right
+      case _: AAlloc      => right
+      case _              =>
         /* Other cases are treated as already normalized. Maybe it shouldn't be the case, but such other cases are not supported by the NormalizedForPointsToAnalysis sub-language in any case. */
         right
     }
 
-  override def normalizeStmtInNestedBlock(stmt: AStmtInNestedBlock): AStmtInNestedBlock =
+  override def normalizeStmtInNestedBlock(
+      stmt: AStmtInNestedBlock): AStmtInNestedBlock =
     stmt match {
       case AAssignStmt(left: AIdentifier, right, _) =>
         // [[id = right]] form, normalizes right only
         nestedBlock(AAssignStmt(left, normalizeRight(right), stmt.loc))
       case AAssignStmt(left, right, _) =>
         // [[left = right]] form where left is a unary operation, normalizes left, and normalizes right to an identifier.
-        nestedBlock(AAssignStmt(normalizeLeft(left), normalizeToIdentifier(right), stmt.loc))
+        nestedBlock(
+          AAssignStmt(normalizeLeft(left),
+                      normalizeToIdentifier(right),
+                      stmt.loc))
       case _ => super.normalizeStmtInNestedBlock(stmt)
     }
 }

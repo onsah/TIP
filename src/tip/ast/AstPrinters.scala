@@ -22,8 +22,8 @@ object AstPrinters {
   implicit class DefaultRecursivePrinter(n: AstNode) {
 
     def print(printer: PartialFunction[AstNode, String]): String =
-      printer.applyOrElse(n, {
-        n: AstNode =>
+      printer.applyOrElse(
+        n, { n: AstNode =>
           n match {
             case ACallFuncExpr(targetFun, args, _) =>
               s"${targetFun.print(printer)}(${args.map(_.print(printer)).mkString(",")})"
@@ -42,9 +42,11 @@ object AstPrinters {
             case AVarRef(id, _) =>
               s"&${id.print(printer)}"
             case ARecord(fields, _) =>
-              fields.map { f =>
-                s"${f.field}:${f.exp.print(printer)}"
-              }.mkString("{", ",", "}")
+              fields
+                .map { f =>
+                  s"${f.field}:${f.exp.print(printer)}"
+                }
+                .mkString("{", ",", "}")
             case AFieldAccess(record, field, _) =>
               s"${record.print(printer)}.$field"
             case ANull(_) =>
@@ -66,7 +68,8 @@ object AstPrinters {
               }
               s"$ls = ${right.print(printer)};"
             case AIfStmt(guard, ifBranch, elseBranch, _) =>
-              val elseb = elseBranch.map(x => "else " + x.print(printer)).getOrElse("")
+              val elseb =
+                elseBranch.map(x => "else " + x.print(printer)).getOrElse("")
               s"if (${guard.print(printer)}) ${ifBranch.print(printer)} $elseb"
             case AOutputStmt(exp, _) =>
               s"output ${exp.print(printer)};"
@@ -83,6 +86,7 @@ object AstPrinters {
             case AProgram(funs, _) =>
               s"${funs.map(_.print(printer)).mkString("\n\n")}"
           }
-      })
+        }
+      )
   }
 }

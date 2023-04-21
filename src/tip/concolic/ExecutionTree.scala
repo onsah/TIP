@@ -17,7 +17,8 @@ sealed trait ExecutionTree { self =>
 
   def parent: ExecutionTree
 
-  def pathCondition(suffix: List[(AExpr, Boolean)] = Nil): List[(AExpr, Boolean)] =
+  def pathCondition(
+      suffix: List[(AExpr, Boolean)] = Nil): List[(AExpr, Boolean)] =
     parent match {
       case b: Branch if b.branches(true) == self =>
         // self node is in the true branch
@@ -40,7 +41,8 @@ sealed trait ExecutionTree { self =>
 class ExecutionTreeRoot() extends ExecutionTree {
   var _children = List[Branch]()
   def children: List[ExecutionTree] = _children
-  override def pathCondition(suffix: List[(AExpr, Boolean)] = Nil): List[(AExpr, Boolean)] = suffix
+  override def pathCondition(
+      suffix: List[(AExpr, Boolean)] = Nil): List[(AExpr, Boolean)] = suffix
   override def parent: ExecutionTree = ??? // This should never happen
   def branch(cond: AExpr, symcond: AExpr, value: Boolean): ExecutionTree = {
     if (_children.isEmpty) {
@@ -49,7 +51,8 @@ class ExecutionTreeRoot() extends ExecutionTree {
       _children = List(node)
     }
     val node = _children.last
-    log.info(s"Exploring ${if (node.count(value) == 0) "unseen " else ""}$value branch")
+    log.info(
+      s"Exploring ${if (node.count(value) == 0) "unseen " else ""}$value branch")
     node.count(value) += 1
     node.branches(value)
   }
@@ -61,7 +64,9 @@ class ExecutionTreeRoot() extends ExecutionTree {
 class SubTreePlaceholder(val parent: Branch) extends ExecutionTree {
   override def children: List[ExecutionTree] = List()
 
-  override def branch(cond: AExpr, symcond: AExpr, value: Boolean): ExecutionTree = {
+  override def branch(cond: AExpr,
+                      symcond: AExpr,
+                      value: Boolean): ExecutionTree = {
     log.info(s"Encountered unseen branching condition: $cond")
     val node = new Branch(cond, symcond, parent)
     if (parent.branches(true) == this) {
@@ -80,7 +85,9 @@ class SubTreePlaceholder(val parent: Branch) extends ExecutionTree {
   */
 class UnsatSubTree(val parent: Branch) extends ExecutionTree {
   override def children: List[ExecutionTree] = List()
-  override def branch(cond: AExpr, symcond: AExpr, value: Boolean): ExecutionTree =
+  override def branch(cond: AExpr,
+                      symcond: AExpr,
+                      value: Boolean): ExecutionTree =
     ??? //this should never happen
 }
 
@@ -88,11 +95,11 @@ class UnsatSubTree(val parent: Branch) extends ExecutionTree {
   * A node representing a branching in the execution tree
   */
 class Branch(
-  val condition: AExpr,
-  val symcondition: AExpr,
-  val parent: ExecutionTree,
-  val branches: mutable.Map[Boolean, ExecutionTree] = mutable.Map(),
-  val count: mutable.Map[Boolean, Int] = mutable.Map()
+    val condition: AExpr,
+    val symcondition: AExpr,
+    val parent: ExecutionTree,
+    val branches: mutable.Map[Boolean, ExecutionTree] = mutable.Map(),
+    val count: mutable.Map[Boolean, Int] = mutable.Map()
 ) extends ExecutionTree {
 
   branches(true) = new SubTreePlaceholder(this)
@@ -102,11 +109,14 @@ class Branch(
 
   def children: List[ExecutionTree] = branches.values.toList
 
-  override def branch(cond: AExpr, symcond: AExpr, value: Boolean): ExecutionTree = {
+  override def branch(cond: AExpr,
+                      symcond: AExpr,
+                      value: Boolean): ExecutionTree = {
     assert(cond == condition)
     assert(symcondition == symcond)
     log.info(s"Encountered seen branching condition: $cond")
-    log.info(s"Exploring ${if (count(value) == 0) "unseen " else ""}$value branch")
+    log.info(
+      s"Exploring ${if (count(value) == 0) "unseen " else ""}$value branch")
     count(value) += 1
     branches(value)
   }
@@ -122,26 +132,34 @@ class Branch(
 }
 
 object ExecutionTreePrinter {
-  private def printNodeValue(treeNode: ExecutionTree, out: StringBuffer): Unit = {
+  private def printNodeValue(treeNode: ExecutionTree,
+                             out: StringBuffer): Unit = {
     val str = treeNode match {
       case n: SubTreePlaceholder =>
         if (n.parent.branches(true) == treeNode && n.parent.count(true) > 0
-          || n.parent.branches(false) == treeNode && n.parent.count(false) > 0)
+            || n.parent.branches(false) == treeNode && n.parent.count(false) > 0)
           "<visited>"
         else
           "<??>"
       case _: UnsatSubTree => "<unsat>"
-      case b: Branch => s"${b.symcondition} (${b.condition})"
-      case _ => ???
+      case b: Branch       => s"${b.symcondition} (${b.condition})"
+      case _               => ???
     }
     out.append(str)
     out.append('\n')
   }
 
-  private def printTree(treeNode: ExecutionTree, out: StringBuffer, isTrue: Boolean = true, indent: String = "", root: Boolean = false): Unit = {
+  private def printTree(treeNode: ExecutionTree,
+                        out: StringBuffer,
+                        isTrue: Boolean = true,
+                        indent: String = "",
+                        root: Boolean = false): Unit = {
     treeNode match {
       case b: Branch =>
-        printTree(b.branches(true), out, true, indent + (if (isTrue) "          " else " |        "))
+        printTree(b.branches(true),
+                  out,
+                  true,
+                  indent + (if (isTrue) "          " else " |        "))
       case _ =>
     }
 
@@ -159,7 +177,11 @@ object ExecutionTreePrinter {
 
     treeNode match {
       case b: Branch =>
-        printTree(b.branches(false), out, false, indent + (if (isTrue && !root) " |        " else "          "))
+        printTree(
+          b.branches(false),
+          out,
+          false,
+          indent + (if (isTrue && !root) " |        " else "          "))
       case _ =>
     }
   }

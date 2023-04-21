@@ -1,6 +1,13 @@
 package tip.analysis
 
-import tip.ast.{AAssignStmt, AIdentifier, AProgram, AstNode, DepthFirstAstVisitor, _}
+import tip.ast.{
+  AAssignStmt,
+  AIdentifier,
+  AProgram,
+  AstNode,
+  DepthFirstAstVisitor,
+  _
+}
 import tip.solvers.SimpleCubicSolver
 import tip.util.Log
 import tip.ast.AstNodeData.{AstNodeWithDeclaration, DeclarationData}
@@ -23,7 +30,7 @@ class ControlFlowAnalysis(program: AProgram)(implicit declData: DeclarationData)
   case class AstVariable(n: AstNode) {
     override def toString: String = n match {
       case fun: AFunDeclaration => s"${fun.name}:${fun.loc}"
-      case _ => n.toString
+      case _                    => n.toString
     }
   }
 
@@ -40,7 +47,9 @@ class ControlFlowAnalysis(program: AProgram)(implicit declData: DeclarationData)
   def analyze(): Map[AstNode, Set[AFunDeclaration]] = {
     visit(program, ())
     val sol = solver.getSolution
-    log.info(s"Solution is:\n${sol.map { case (k, v) => s"  \u27E6$k\u27E7 = {${v.mkString(",")}}" }.mkString("\n")}")
+    log.info(s"Solution is:\n${sol
+      .map { case (k, v) => s"  \u27E6$k\u27E7 = {${v.mkString(",")}}" }
+      .mkString("\n")}")
     sol.map(vardecl => vardecl._1.n -> vardecl._2.map(_.fun))
   }
 
@@ -58,17 +67,19 @@ class ControlFlowAnalysis(program: AProgram)(implicit declData: DeclarationData)
       */
     def decl(n: AstNode): AstNode = n match {
       case id: AIdentifier => id.declaration
-      case _ => n
+      case _               => n
     }
 
     implicit def toVar(n: AstNode): AstVariable = AstVariable(n)
 
     node match {
-      case fun: AFunDeclaration => ??? //<--- Complete here
+      case fun: AFunDeclaration               => ??? //<--- Complete here
       case AAssignStmt(id: AIdentifier, e, _) => ??? //<--- Complete here
-      case ACallFuncExpr(targetFun: AIdentifier, args, _) if decl(targetFun).isInstanceOf[AFunDeclaration] => ??? //<--- Complete here (or remove this case)
+      case ACallFuncExpr(targetFun: AIdentifier, args, _)
+          if decl(targetFun).isInstanceOf[AFunDeclaration] =>
+        ??? //<--- Complete here (or remove this case)
       case ACallFuncExpr(targetFun, args, _) => ??? //<--- Complete here
-      case _ =>
+      case _                                 =>
     }
     visitChildren(node, ())
   }

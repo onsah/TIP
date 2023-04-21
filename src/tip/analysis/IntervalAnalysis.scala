@@ -6,7 +6,9 @@ import tip.lattices.IntervalLattice._
 import tip.lattices._
 import tip.solvers._
 
-trait IntervalAnalysisWidening extends ValueAnalysisMisc with Dependencies[CfgNode] {
+trait IntervalAnalysisWidening
+    extends ValueAnalysisMisc
+    with Dependencies[CfgNode] {
 
   import tip.cfg.CfgOps._
 
@@ -31,14 +33,16 @@ trait IntervalAnalysisWidening extends ValueAnalysisMisc with Dependencies[CfgNo
 
   private def maxB(a: IntervalLattice.Num) = B.filter(_ <= a).max
 
-  def widenInterval(x: valuelattice.Element, y: valuelattice.Element): valuelattice.Element =
+  def widenInterval(x: valuelattice.Element,
+                    y: valuelattice.Element): valuelattice.Element =
     (x, y) match {
       case (IntervalLattice.EmptyInterval, _) => y
       case (_, IntervalLattice.EmptyInterval) => x
-      case ((l1, h1), (l2, h2)) => ??? //<--- Complete here
+      case ((l1, h1), (l2, h2))               => ??? //<--- Complete here
     }
 
-  def widen(x: liftedstatelattice.Element, y: liftedstatelattice.Element): liftedstatelattice.Element =
+  def widen(x: liftedstatelattice.Element,
+            y: liftedstatelattice.Element): liftedstatelattice.Element =
     (x, y) match {
       case (liftedstatelattice.Bottom, _) => y
       case (_, liftedstatelattice.Bottom) => x
@@ -56,17 +60,24 @@ object IntervalAnalysis {
     /**
       * Interval analysis, using the worklist solver with init and widening.
       */
-    class WorklistSolverWithWidening(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisWorklistSolverWithReachability(cfg, IntervalLattice)
+    class WorklistSolverWithWidening(cfg: IntraproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisWorklistSolverWithReachability(
+          cfg,
+          IntervalLattice)
         with WorklistFixpointSolverWithReachabilityAndWidening[CfgNode]
         with IntervalAnalysisWidening
 
     /**
       * Interval analysis, using the worklist solver with init, widening, and narrowing.
       */
-    class WorklistSolverWithWideningAndNarrowing(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisWorklistSolverWithReachability(cfg, IntervalLattice)
-        with WorklistFixpointSolverWithReachabilityAndWideningAndNarrowing[CfgNode]
+    class WorklistSolverWithWideningAndNarrowing(cfg: IntraproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisWorklistSolverWithReachability(
+          cfg,
+          IntervalLattice)
+        with WorklistFixpointSolverWithReachabilityAndWideningAndNarrowing[
+          CfgNode]
         with IntervalAnalysisWidening {
 
       val narrowingSteps = 5

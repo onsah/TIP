@@ -1,6 +1,13 @@
 package tip.solvers
 
-import tip.cfg.{CfgAfterCallNode, CfgCallNode, CfgFunEntryNode, CfgFunExitNode, CfgNode, InterproceduralProgramCfg}
+import tip.cfg.{
+  CfgAfterCallNode,
+  CfgCallNode,
+  CfgFunEntryNode,
+  CfgFunExitNode,
+  CfgNode,
+  InterproceduralProgramCfg
+}
 import tip.lattices.{EdgeFunctionLattice, Lattice}
 
 /**
@@ -32,17 +39,20 @@ trait IDEAnalysis[D, L <: Lattice] {
   /**
     * Edges for call-to-entry.
     */
-  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(d: DL): Map[DL, edgelattice.Element]
+  def edgesCallToEntry(call: CfgCallNode, entry: CfgFunEntryNode)(
+      d: DL): Map[DL, edgelattice.Element]
 
   /**
     * Edges for exit-to-aftercall.
     */
-  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.Element]
+  def edgesExitToAfterCall(exit: CfgFunExitNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.Element]
 
   /**
     * Edges for call-to-aftercall.
     */
-  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(d: DL): Map[DL, edgelattice.Element]
+  def edgesCallToAfterCall(call: CfgCallNode, aftercall: CfgAfterCallNode)(
+      d: DL): Map[DL, edgelattice.Element]
 
   /**
     * Edges for other CFG nodes.

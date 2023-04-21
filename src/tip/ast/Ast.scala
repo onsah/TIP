@@ -69,15 +69,26 @@ sealed trait AAtomicExpr extends AExpr
 
 sealed trait ADeclaration extends AstNode
 
-case class ACallFuncExpr(targetFun: AExpr, args: List[AExpr], loc: Loc) extends AExpr
+case class ACallFuncExpr(targetFun: AExpr, args: List[AExpr], loc: Loc)
+    extends AExpr
 
-case class AIdentifierDeclaration(name: String, loc: Loc) extends ADeclaration with AExprOrIdentifierDeclaration
+case class AIdentifierDeclaration(name: String, loc: Loc)
+    extends ADeclaration
+    with AExprOrIdentifierDeclaration
 
-case class AIdentifier(name: String, loc: Loc) extends AExpr with AAtomicExpr with ReferenceAssignable
+case class AIdentifier(name: String, loc: Loc)
+    extends AExpr
+    with AAtomicExpr
+    with ReferenceAssignable
 
-case class ABinaryOp(operator: BinaryOperator, left: AExpr, right: AExpr, loc: Loc) extends AExpr
+case class ABinaryOp(operator: BinaryOperator,
+                     left: AExpr,
+                     right: AExpr,
+                     loc: Loc)
+    extends AExpr
 
-case class AUnaryOp(operator: UnaryOperator, subexp: AExpr, loc: Loc) extends AExpr
+case class AUnaryOp(operator: UnaryOperator, subexp: AExpr, loc: Loc)
+    extends AExpr
 
 case class ANumber(value: Int, loc: Loc) extends AExpr with AAtomicExpr
 
@@ -93,7 +104,9 @@ case class ARecord(fields: List[ARecordField], loc: Loc) extends AExpr
 
 case class ARecordField(field: String, exp: AExpr, loc: Loc)
 
-case class AFieldAccess(record: AExpr, field: String, loc: Loc) extends AExpr with AAtomicExpr
+case class AFieldAccess(record: AExpr, field: String, loc: Loc)
+    extends AExpr
+    with AAtomicExpr
 
 //////////////// Statements //////////////////////////
 
@@ -104,7 +117,8 @@ sealed trait AStmt extends AstNode
   */
 sealed trait AStmtInNestedBlock extends AStmt
 
-case class AAssignStmt(left: Assignable, right: AExpr, loc: Loc) extends AStmtInNestedBlock
+case class AAssignStmt(left: Assignable, right: AExpr, loc: Loc)
+    extends AStmtInNestedBlock
 
 sealed trait Assignable
 
@@ -114,9 +128,11 @@ case class ADerefWrite(exp: AExpr, loc: Loc) extends ReferenceAssignable
 
 sealed trait FieldAssignable extends Assignable
 
-case class ADirectFieldWrite(id: AIdentifier, field: String, loc: Loc) extends FieldAssignable
+case class ADirectFieldWrite(id: AIdentifier, field: String, loc: Loc)
+    extends FieldAssignable
 
-case class AIndirectFieldWrite(exp: AExpr, field: String, loc: Loc) extends FieldAssignable
+case class AIndirectFieldWrite(exp: AExpr, field: String, loc: Loc)
+    extends FieldAssignable
 
 sealed trait ABlock extends AStmt {
 
@@ -127,9 +143,15 @@ sealed trait ABlock extends AStmt {
 
 }
 
-case class ANestedBlockStmt(body: List[AStmtInNestedBlock], loc: Loc) extends ABlock with AStmtInNestedBlock
+case class ANestedBlockStmt(body: List[AStmtInNestedBlock], loc: Loc)
+    extends ABlock
+    with AStmtInNestedBlock
 
-case class AFunBlockStmt(declarations: List[AVarStmt], others: List[AStmtInNestedBlock], ret: AReturnStmt, loc: Loc) extends ABlock {
+case class AFunBlockStmt(declarations: List[AVarStmt],
+                         others: List[AStmtInNestedBlock],
+                         ret: AReturnStmt,
+                         loc: Loc)
+    extends ABlock {
 
   /**
     * The contents of the block: declarations, others, and return.
@@ -137,7 +159,11 @@ case class AFunBlockStmt(declarations: List[AVarStmt], others: List[AStmtInNeste
   val body: List[AStmt] = declarations ++ (others :+ ret)
 }
 
-case class AIfStmt(guard: AExpr, ifBranch: AStmtInNestedBlock, elseBranch: Option[AStmtInNestedBlock], loc: Loc) extends AStmtInNestedBlock
+case class AIfStmt(guard: AExpr,
+                   ifBranch: AStmtInNestedBlock,
+                   elseBranch: Option[AStmtInNestedBlock],
+                   loc: Loc)
+    extends AStmtInNestedBlock
 
 case class AOutputStmt(exp: AExpr, loc: Loc) extends AStmtInNestedBlock
 
@@ -145,9 +171,11 @@ case class AReturnStmt(exp: AExpr, loc: Loc) extends AStmt
 
 case class AErrorStmt(exp: AExpr, loc: Loc) extends AStmtInNestedBlock
 
-case class AVarStmt(declIds: List[AIdentifierDeclaration], loc: Loc) extends AStmt
+case class AVarStmt(declIds: List[AIdentifierDeclaration], loc: Loc)
+    extends AStmt
 
-case class AWhileStmt(guard: AExpr, innerBlock: AStmtInNestedBlock, loc: Loc) extends AStmtInNestedBlock
+case class AWhileStmt(guard: AExpr, innerBlock: AStmtInNestedBlock, loc: Loc)
+    extends AStmtInNestedBlock
 
 //////////////// Program and function ///////////////
 
@@ -156,7 +184,9 @@ case class AProgram(funs: List[AFunDeclaration], loc: Loc) extends AstNode {
   def mainFunction: AFunDeclaration = {
     val main = findMainFunction()
     if (main.isDefined) main.get
-    else throw new TipProgramException(s"Missing main function, declared functions are $funs")
+    else
+      throw new TipProgramException(
+        s"Missing main function, declared functions are $funs")
   }
 
   def hasMainFunction: Boolean =
@@ -169,6 +199,10 @@ case class AProgram(funs: List[AFunDeclaration], loc: Loc) extends AstNode {
     s"${this.print(PartialFunction.empty)}"
 }
 
-case class AFunDeclaration(name: String, params: List[AIdentifierDeclaration], stmts: AFunBlockStmt, loc: Loc) extends ADeclaration {
+case class AFunDeclaration(name: String,
+                           params: List[AIdentifierDeclaration],
+                           stmts: AFunBlockStmt,
+                           loc: Loc)
+    extends ADeclaration {
   override def toString: String = s"$name(${params.mkString(",")}){...}:$loc"
 }

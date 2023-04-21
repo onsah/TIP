@@ -84,7 +84,8 @@ trait MapLatticeSolver[N] extends LatticeSolver with Dependencies[N] {
     */
   def join(n: N, o: lattice.Element): lattice.sublattice.Element = {
     val states = indep(n).map(o(_))
-    states.foldLeft(lattice.sublattice.bottom)((acc, pred) => lattice.sublattice.lub(acc, pred))
+    states.foldLeft(lattice.sublattice.bottom)((acc, pred) =>
+      lattice.sublattice.lub(acc, pred))
   }
 }
 
@@ -92,7 +93,9 @@ trait MapLatticeSolver[N] extends LatticeSolver with Dependencies[N] {
   * Simple fixpoint solver for map lattices where the constraint function is defined pointwise.
   * @tparam N type of the elements in the map domain.
   */
-trait SimpleMapLatticeFixpointSolver[N] extends SimpleFixpointSolver with MapLatticeSolver[N] {
+trait SimpleMapLatticeFixpointSolver[N]
+    extends SimpleFixpointSolver
+    with MapLatticeSolver[N] {
 
   /**
     * The map domain.
@@ -128,12 +131,15 @@ trait MapLiftLatticeSolver[N] extends MapLatticeSolver[N] with Dependencies[N] {
   /**
     * The transfer function for the sub-sub-lattice.
     */
-  def transferUnlifted(n: N, s: lattice.sublattice.sublattice.Element): lattice.sublattice.sublattice.Element
+  def transferUnlifted(n: N, s: lattice.sublattice.sublattice.Element)
+    : lattice.sublattice.sublattice.Element
 
-  def transfer(n: N, s: lattice.sublattice.Element): lattice.sublattice.Element = {
+  def transfer(n: N,
+               s: lattice.sublattice.Element): lattice.sublattice.Element = {
     import lattice.sublattice._
     s match {
-      case Bottom => Bottom // unreachable as input implied unreachable at output
+      case Bottom =>
+        Bottom // unreachable as input implied unreachable at output
       case Lift(a) => lift(transferUnlifted(n, a))
     }
   }
@@ -199,7 +205,10 @@ trait ListSetWorklist[N] extends Worklist[N] {
   * Base trait for worklist-based fixpoint solvers.
   * @tparam N type of the elements in the worklist.
   */
-trait WorklistFixpointSolver[N] extends MapLatticeSolver[N] with ListSetWorklist[N] with Dependencies[N] {
+trait WorklistFixpointSolver[N]
+    extends MapLatticeSolver[N]
+    with ListSetWorklist[N]
+    with Dependencies[N] {
 
   /**
     * The current lattice element.
@@ -241,7 +250,9 @@ trait SimpleWorklistFixpointSolver[N] extends WorklistFixpointSolver[N] {
   *
   * This solver works for map lattices with lifted co-domains, where the extra bottom element typically represents "unreachable".
   */
-trait WorklistFixpointSolverWithReachability[N] extends WorklistFixpointSolver[N] with MapLiftLatticeSolver[N] {
+trait WorklistFixpointSolverWithReachability[N]
+    extends WorklistFixpointSolver[N]
+    with MapLiftLatticeSolver[N] {
 
   /**
     * The start locations, used as the initial contents of the worklist.
@@ -308,7 +319,9 @@ trait WorklistFixpointPropagationFunctions[N] extends ListSetWorklist[N] {
   * Note that with this approach, each abstract state represents the program point *before* the node
   * (for a forward analysis, and opposite for a backward analysis).
   */
-trait WorklistFixpointPropagationSolver[N] extends WorklistFixpointSolverWithReachability[N] with WorklistFixpointPropagationFunctions[N] {
+trait WorklistFixpointPropagationSolver[N]
+    extends WorklistFixpointSolverWithReachability[N]
+    with WorklistFixpointPropagationFunctions[N] {
 
   val lattice: MapLattice[N, LiftLattice[Lattice]]
 
@@ -316,7 +329,8 @@ trait WorklistFixpointPropagationSolver[N] extends WorklistFixpointSolverWithRea
     * The initial lattice element at the start locations.
     * Default: lift(bottom).
     */
-  def init: lattice.sublattice.Element = lattice.sublattice.lift(lattice.sublattice.sublattice.bottom)
+  def init: lattice.sublattice.Element =
+    lattice.sublattice.lift(lattice.sublattice.sublattice.bottom)
 
   /**
     * This method overrides the one from [[WorklistFixpointSolver]].
@@ -345,7 +359,8 @@ trait WorklistFixpointPropagationSolver[N] extends WorklistFixpointSolverWithRea
 /**
   * Worklist-based fixpoint solver with reachability and widening.
   */
-trait WorklistFixpointSolverWithReachabilityAndWidening[N] extends WorklistFixpointSolverWithReachability[N] {
+trait WorklistFixpointSolverWithReachabilityAndWidening[N]
+    extends WorklistFixpointSolverWithReachability[N] {
 
   /**
     * Widening function.
@@ -353,7 +368,8 @@ trait WorklistFixpointSolverWithReachabilityAndWidening[N] extends WorklistFixpo
     * @param y lattice element from this iteration
     * @return output lattice element
     */
-  def widen(x: lattice.sublattice.Element, y: lattice.sublattice.Element): lattice.sublattice.Element
+  def widen(x: lattice.sublattice.Element,
+            y: lattice.sublattice.Element): lattice.sublattice.Element
 
   /**
     * Tells whether `n` is a loop-head.
@@ -393,5 +409,6 @@ trait WorklistFixpointSolverWithReachabilityAndWideningAndNarrowing[N]
     if (i <= 0) x else narrow(fun(x), i - 1) // uses the simple definition of 'fun' from SimpleMapLatticeFixpointSolver
 
   override def analyze(): lattice.Element =
-    narrow(super[WorklistFixpointSolverWithReachabilityAndWidening].analyze(), narrowingSteps)
+    narrow(super[WorklistFixpointSolverWithReachabilityAndWidening].analyze(),
+           narrowingSteps)
 }

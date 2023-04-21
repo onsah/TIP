@@ -18,11 +18,14 @@ object Output {
     * @param kind output kind (determines the file name suffix)
     * @param outFolder the output directory
     */
-  def output(file: File, kind: OutputKind, content: String, outFolder: File): Unit = {
+  def output(file: File,
+             kind: OutputKind,
+             content: String,
+             outFolder: File): Unit = {
     val extension = kind match {
-      case OtherOutput(OutputKindE.`cfg`) => "_cfg.dot"
-      case OtherOutput(OutputKindE.`icfg`) => "_icfg.dot"
-      case OtherOutput(OutputKindE.`types`) => "_types.ttip"
+      case OtherOutput(OutputKindE.`cfg`)        => "_cfg.dot"
+      case OtherOutput(OutputKindE.`icfg`)       => "_icfg.dot"
+      case OtherOutput(OutputKindE.`types`)      => "_types.ttip"
       case OtherOutput(OutputKindE.`normalized`) => "_normalized.tip"
       case DataFlowOutput(k) =>
         s"_$k.dot"
@@ -83,12 +86,13 @@ object Output {
     * Helper function for producing string output for a control-flow graph node after an analysis.
     * @param res map from control-flow graph nodes to strings, as produced by the analysis
     */
-  def labeler(res: Map[CfgNode, _], stateAfterNode: Boolean)(n: CfgNode): String = {
+  def labeler(res: Map[CfgNode, _], stateAfterNode: Boolean)(
+      n: CfgNode): String = {
     val r = res.getOrElse(n, "-")
     val desc = n match {
       case entry: CfgFunEntryNode => s"Function ${entry.data.name} entry"
-      case exit: CfgFunExitNode => s"Function ${exit.data.name} exit"
-      case _ => n.toString
+      case exit: CfgFunExitNode   => s"Function ${exit.data.name} exit"
+      case _                      => n.toString
     }
     if (stateAfterNode) s"$desc\n$r"
     else s"$r\n$desc"
@@ -98,10 +102,11 @@ object Output {
     * Transforms a map from pairs of call contexts and CFG nodes to values into a map from CFG nodes to strings.
     */
   def transform(res: Map[(CallContext, CfgNode), _]): Map[CfgNode, String] = {
-    val m = collection.mutable.Map[CfgNode, List[String]]().withDefaultValue(Nil)
+    val m =
+      collection.mutable.Map[CfgNode, List[String]]().withDefaultValue(Nil)
     res.foreach {
       case ((c, n), v) => m += n -> (s"$c: $v" :: m(n))
-      case _ => ???
+      case _           => ???
     }
     m.toMap.mapValues { _.mkString("\n") }.withDefaultValue("")
   }
@@ -111,11 +116,16 @@ object Output {
     */
   def dotIder(n: CfgNode): String =
     n match {
-      case real: CfgStmtNode => s"real${real.data.loc.col}_${real.data.loc.line}"
-      case entry: CfgFunEntryNode => s"entry${entry.data.loc.col}_${entry.data.loc.line}"
-      case exit: CfgFunExitNode => s"exit${exit.data.loc.col}_${exit.data.loc.line}"
-      case call: CfgCallNode => s"cally${call.data.loc.col}_${call.data.loc.line}"
-      case acall: CfgAfterCallNode => s"acall${acall.data.loc.col}_${acall.data.loc.line}"
+      case real: CfgStmtNode =>
+        s"real${real.data.loc.col}_${real.data.loc.line}"
+      case entry: CfgFunEntryNode =>
+        s"entry${entry.data.loc.col}_${entry.data.loc.line}"
+      case exit: CfgFunExitNode =>
+        s"exit${exit.data.loc.col}_${exit.data.loc.line}"
+      case call: CfgCallNode =>
+        s"cally${call.data.loc.col}_${call.data.loc.line}"
+      case acall: CfgAfterCallNode =>
+        s"acall${acall.data.loc.col}_${acall.data.loc.line}"
     }
 }
 
@@ -131,7 +141,8 @@ sealed trait OutputKind
 /**
   * Output kind for a dataflow analysis (named according to the analysis).
   */
-case class DataFlowOutput(kind: FlowSensitiveAnalysis.Analysis.Value) extends OutputKind {
+case class DataFlowOutput(kind: FlowSensitiveAnalysis.Analysis.Value)
+    extends OutputKind {
   override def toString: String = kind.toString
 }
 

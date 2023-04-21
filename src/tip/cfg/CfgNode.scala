@@ -42,7 +42,7 @@ trait CfgNode {
   override def equals(obj: scala.Any): Boolean =
     obj match {
       case o: CfgNode => o.id == this.id
-      case _ => false
+      case _          => false
     }
 
   override def hashCode(): Int = id
@@ -53,10 +53,10 @@ trait CfgNode {
   * The `data` field holds the statement, or in case of if/while instructions, the branch condition.
   */
 case class CfgStmtNode(
-  override val id: Int = CfgNode.uid,
-  override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  data: AstNode
+    override val id: Int = CfgNode.uid,
+    override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    data: AstNode
 ) extends CfgNode {
 
   override def toString: String = s"[Stmt] $data"
@@ -67,10 +67,10 @@ case class CfgStmtNode(
   * The `data` field holds the assignment statement where the right-hand-side is the function call.
   */
 case class CfgCallNode(
-  override val id: Int = CfgNode.uid,
-  override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  data: AAssignStmt
+    override val id: Int = CfgNode.uid,
+    override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    data: AAssignStmt
 ) extends CfgNode {
 
   override def toString: String = s"[Call] $data"
@@ -81,10 +81,10 @@ case class CfgCallNode(
   * The `data` field holds the assignment statement where the right-hand-side is the function call.
   */
 case class CfgAfterCallNode(
-  override val id: Int = CfgNode.uid,
-  override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  data: AAssignStmt
+    override val id: Int = CfgNode.uid,
+    override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    data: AAssignStmt
 ) extends CfgNode {
 
   override def toString: String = s"[AfterCall] $data"
@@ -94,10 +94,10 @@ case class CfgAfterCallNode(
   * Node in a CFG representing the entry of a function.
   */
 case class CfgFunEntryNode(
-  override val id: Int = CfgNode.uid,
-  override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  data: AFunDeclaration
+    override val id: Int = CfgNode.uid,
+    override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    data: AFunDeclaration
 ) extends CfgNode {
 
   override def toString: String = s"[FunEntry] $data"
@@ -107,10 +107,10 @@ case class CfgFunEntryNode(
   * Node in a CFG representing the exit of a function.
   */
 case class CfgFunExitNode(
-  override val id: Int = CfgNode.uid,
-  override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
-  data: AFunDeclaration
+    override val id: Int = CfgNode.uid,
+    override val pred: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    override val succ: mutable.Set[CfgNode] = mutable.Set[CfgNode](),
+    data: AFunDeclaration
 ) extends CfgNode {
 
   override def toString: String = s"[FunExit] $data"

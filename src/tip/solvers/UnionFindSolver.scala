@@ -48,7 +48,8 @@ class UnionFindSolver[A] {
             unify(a1, a2)
         }
       case (x, y) =>
-        throw new UnificationFailure(s"Cannot unify $t1 and $t2 (with representatives $x and $y)")
+        throw new UnificationFailure(
+          s"Cannot unify $t1 and $t2 (with representatives $x and $y)")
     }
   }
 
@@ -86,7 +87,10 @@ class UnionFindSolver[A] {
     */
   def solution(): Map[Var[A], Term[A]] =
     // for each constraint variable, find its canonical representative (using the variable itself as default)
-    parent.keys.collect { case v: Var[A] => (v, find(v)) }.toMap.withDefault(v => v)
+    parent.keys
+      .collect { case v: Var[A] => (v, find(v)) }
+      .toMap
+      .withDefault(v => v)
 
   /**
     * Returns all the unifications of the solution.
@@ -105,4 +109,5 @@ class UnionFindSolver[A] {
 /**
   * Exception thrown in case of unification failure.
   */
-class UnificationFailure(message: String = null) extends RuntimeException(message)
+class UnificationFailure(message: String = null)
+    extends RuntimeException(message)

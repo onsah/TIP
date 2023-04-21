@@ -36,13 +36,15 @@ trait Lattice {
   /**
     * Returns true whenever `x` <= `y`.
     */
-  def leq(x: Element, y: Element): Boolean = lub(x, y) == y // rarely used, but easy to implement :-)
+  def leq(x: Element, y: Element): Boolean =
+    lub(x, y) == y // rarely used, but easy to implement :-)
 }
 
 /**
   * The `n`-th product lattice made of `sublattice` lattices.
   */
-class UniformProductLattice[L <: Lattice](val sublattice: L, n: Int) extends Lattice {
+class UniformProductLattice[L <: Lattice](val sublattice: L, n: Int)
+    extends Lattice {
 
   type Element = List[sublattice.Element]
 
@@ -54,7 +56,8 @@ class UniformProductLattice[L <: Lattice](val sublattice: L, n: Int) extends Lat
     (x zip y).map { case (xc, yc) => sublattice.lub(xc, yc) }
   }
 
-  private def error() = throw new IllegalArgumentException("Products not of same length")
+  private def error() =
+    throw new IllegalArgumentException("Products not of same length")
 }
 
 /**
@@ -92,7 +95,7 @@ class FlatLattice[X] extends Lattice {
     */
   implicit def unwrap(a: Element): X = a match {
     case FlatEl(n) => n
-    case _ => throw new IllegalArgumentException(s"Cannot unlift $a")
+    case _         => throw new IllegalArgumentException(s"Cannot unlift $a")
   }
 
   val bottom: Element = Bot
@@ -116,13 +119,16 @@ class TwoElementLattice extends FlatLattice[Nothing]
 /**
   * The product lattice made by `l1` and `l2`.
   */
-class PairLattice[L1 <: Lattice, L2 <: Lattice](val sublattice1: L1, val sublattice2: L2) extends Lattice {
+class PairLattice[L1 <: Lattice, L2 <: Lattice](val sublattice1: L1,
+                                                val sublattice2: L2)
+    extends Lattice {
 
   type Element = (sublattice1.Element, sublattice2.Element)
 
   val bottom: Element = (sublattice1.bottom, sublattice2.bottom)
 
-  def lub(x: Element, y: Element): Element = (sublattice1.lub(x._1, y._1), sublattice2.lub(x._2, y._2))
+  def lub(x: Element, y: Element): Element =
+    (sublattice1.lub(x._1, y._1), sublattice2.lub(x._2, y._2))
 }
 
 /**
@@ -136,7 +142,9 @@ class MapLattice[A, +L <: Lattice](val sublattice: L) extends Lattice {
   val bottom: Element = Map().withDefaultValue(sublattice.bottom)
 
   def lub(x: Element, y: Element): Element =
-    x.keys.foldLeft(y)((m, a) => m + (a -> sublattice.lub(x(a), y(a)))).withDefaultValue(sublattice.bottom)
+    x.keys
+      .foldLeft(y)((m, a) => m + (a -> sublattice.lub(x(a), y(a))))
+      .withDefaultValue(sublattice.bottom)
 }
 
 /**
@@ -183,8 +191,8 @@ class LiftLattice[+L <: Lattice](val sublattice: L) extends Lattice {
 
   def lub(x: Element, y: Element): Element =
     (x, y) match {
-      case (Bottom, t) => t
-      case (t, Bottom) => t
+      case (Bottom, t)        => t
+      case (t, Bottom)        => t
       case (Lift(a), Lift(b)) => Lift(sublattice.lub(a, b))
     }
 
@@ -201,6 +209,6 @@ class LiftLattice[+L <: Lattice](val sublattice: L) extends Lattice {
     */
   implicit def unlift(x: Element): sublattice.Element = x match {
     case Lift(s) => s
-    case Bottom => throw new IllegalArgumentException("Cannot unlift bottom")
+    case Bottom  => throw new IllegalArgumentException("Cannot unlift bottom")
   }
 }

@@ -11,7 +11,8 @@ import tip.ast.AstNodeData.DeclarationData
 /**
   * (A variant of) the IDE analysis algorithm.
   */
-abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
+abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(
+    implicit declData: DeclarationData)
     extends FlowSensitiveAnalysis(false)
     with IDEAnalysis[D, L] {
 
@@ -20,12 +21,15 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
     * The original version of the algorithm uses summary edges from call nodes to after-call nodes
     * instead of `callJumpCache` and `exitJumpCache`.
     */
-  class Phase1(val cfg: InterproceduralProgramCfg) extends WorklistFixpointPropagationFunctions[(CfgNode, Either[D, Lambda], Either[D, Lambda])] {
+  class Phase1(val cfg: InterproceduralProgramCfg)
+      extends WorklistFixpointPropagationFunctions[
+        (CfgNode, Either[D, Lambda], Either[D, Lambda])] {
 
     /**
       * The analysis lattice.
       */
-    val lattice: MapLattice[(CfgNode, DL, DL), edgelattice.type] = new MapLattice(edgelattice)
+    val lattice: MapLattice[(CfgNode, DL, DL), edgelattice.type] =
+      new MapLattice(edgelattice)
 
     /**
       * The current lattice element.
@@ -36,25 +40,35 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       * callJumpCache(funentry, d1, call)(d3) returns the composition of the edges (call.funentry, d3) -> (call, *) -> (funentry, d1).
       * Allows faster lookup than scanning through the current lattice element.
       */
-    private val callJumpCache = mutable.Map[(CfgFunEntryNode, DL, CfgCallNode), mutable.Map[DL, edgelattice.EdgeFunction]]()
+    private val callJumpCache =
+      mutable.Map[(CfgFunEntryNode, DL, CfgCallNode),
+                  mutable.Map[DL, edgelattice.EdgeFunction]]()
 
     /**
       * exitJumpCache(funentry, d1) contains d2 if there is a non-bottom edge (funentry, d1) -> (funentry.exit, d2).
       * Allows faster lookup than scanning through the current lattice element.
       */
-    private val exitJumpCache = mutable.Map[(CfgFunEntryNode, DL), mutable.Set[DL]]()
+    private val exitJumpCache =
+      mutable.Map[(CfgFunEntryNode, DL), mutable.Set[DL]]()
 
     import edgelattice.{EdgeFunction, IdEdge}
 
-    val first: Set[(CfgNode, DL, DL)] = Set((cfg.programEntry, Right(Lambda()), Right(Lambda())))
+    val first: Set[(CfgNode, DL, DL)] = Set(
+      (cfg.programEntry, Right(Lambda()), Right(Lambda())))
 
     val init = IdEdge()
 
     /**
       * Joins the given edge into the call jump cache.
       */
-    private def storeCallJump(funentry: CfgFunEntryNode, d1: DL, call: CfgCallNode, e: EdgeFunction, d3: DL): Unit = {
-      val m = callJumpCache.getOrElseUpdate((funentry, d1, call), mutable.Map[DL, edgelattice.EdgeFunction]())
+    private def storeCallJump(funentry: CfgFunEntryNode,
+                              d1: DL,
+                              call: CfgCallNode,
+                              e: EdgeFunction,
+                              d3: DL): Unit = {
+      val m = callJumpCache.getOrElseUpdate(
+        (funentry, d1, call),
+        mutable.Map[DL, edgelattice.EdgeFunction]())
       m += d3 -> m.getOrElse(d3, edgelattice.bottom).joinWith(e)
     }
 
@@ -72,18 +86,24 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       * @param funexit   the function exit node
       * @param aftercall the aftercall node
       */
-    private def returnflow(d1: DL, d2: DL, funexit: CfgFunExitNode, aftercall: CfgAfterCallNode): Unit = {
+    private def returnflow(d1: DL,
+                           d2: DL,
+                           funexit: CfgFunExitNode,
+                           aftercall: CfgAfterCallNode): Unit = {
       import cfg._
-      callJumpCache.getOrElseUpdate((funexit.entry, d1, aftercall.callNode), mutable.Map[DL, edgelattice.EdgeFunction]()).foreach {
-        case (d3, e12) => // d3 is now an item at the caller function entry, and e12 is the composed edge to d1 at the callee entry
-          val e3 = x(funexit, d1, d2) // summary edge from d1 to d2 at the callee function
-          val e123 = e3.composeWith(e12)
-          edgesExitToAfterCall(funexit, aftercall)(d2).foreach {
-            case (d4, e4) => // d4 is now an item at the aftercall node, and e4 is the edge from the function exit to the aftercall node
-              val e = e4.composeWith(e123) // e is now the composed edge from e3 at the caller entry to d4 at the aftercall node
-              propagate(e, (aftercall, d3, d4))
-          }
-      }
+      callJumpCache
+        .getOrElseUpdate((funexit.entry, d1, aftercall.callNode),
+                         mutable.Map[DL, edgelattice.EdgeFunction]())
+        .foreach {
+          case (d3, e12) => // d3 is now an item at the caller function entry, and e12 is the composed edge to d1 at the callee entry
+            val e3 = x(funexit, d1, d2) // summary edge from d1 to d2 at the callee function
+            val e123 = e3.composeWith(e12)
+            edgesExitToAfterCall(funexit, aftercall)(d2).foreach {
+              case (d4, e4) => // d4 is now an item at the aftercall node, and e4 is the edge from the function exit to the aftercall node
+                val e = e4.composeWith(e123) // e is now the composed edge from e3 at the caller entry to d4 at the aftercall node
+                propagate(e, (aftercall, d3, d4))
+            }
+        }
     }
 
     def process(nab: (CfgNode, DL, DL)) = {
@@ -104,9 +124,11 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
                     // cache the composed edge from the entry of the caller to the entry of the callee
                     storeCallJump(entry, d3, call, e2.composeWith(e1), d1)
                     // propagate existing return flow to the after-call node
-                    exitJumpCache.getOrElseUpdate((entry, d3), mutable.Set[DL]()).foreach { d4 =>
-                      returnflow(d3, d4, entry.exit, call.afterCallNode)
-                    }
+                    exitJumpCache
+                      .getOrElseUpdate((entry, d3), mutable.Set[DL]())
+                      .foreach { d4 =>
+                        returnflow(d3, d4, entry.exit, call.afterCallNode)
+                      }
                 }
               }
               // propagate bypassing local variables to after-call
@@ -140,22 +162,37 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       *
       * @return a map s such that s(f)(d1)(d2) is the transfer function for function f from d1 at function entry to d2 at function exit
       */
-    def summaries(): mutable.Map[AFunDeclaration, mutable.Map[DL, mutable.Map[DL, EdgeFunction]]] = {
+    def summaries()
+      : mutable.Map[AFunDeclaration,
+                    mutable.Map[DL, mutable.Map[DL, EdgeFunction]]] = {
       import edgelattice.EdgeFunction
-      val res = mutable.Map[AFunDeclaration, mutable.Map[DL, mutable.Map[DL, EdgeFunction]]]()
+      val res = mutable
+        .Map[AFunDeclaration, mutable.Map[DL, mutable.Map[DL, EdgeFunction]]]()
       x.foreach {
         case ((n, d1, d2), e) =>
           n match {
             case funexit: CfgFunExitNode =>
-              val m1 = res.getOrElseUpdate(funexit.data, mutable.Map[DL, mutable.Map[DL, EdgeFunction]]().withDefaultValue(mutable.Map[DL, EdgeFunction]()))
+              val m1 = res.getOrElseUpdate(
+                funexit.data,
+                mutable
+                  .Map[DL, mutable.Map[DL, EdgeFunction]]()
+                  .withDefaultValue(mutable.Map[DL, EdgeFunction]()))
               val m2 = m1.getOrElseUpdate(d1, mutable.Map[DL, EdgeFunction]())
               m2 += d2 -> e
             case _ => // ignore other node kinds
           }
       }
-      FixpointSolvers.log.verb(s"Function summaries:\n${res.map {
-        case (f, s) => s"  function $f:\n${s.map { case (d1, m) => s"${m.map { case (d2, e) => s"    ($d1,$d2): $e" }.mkString("\n")}" }.mkString("\n")}"
-      }.mkString("\n")} ")
+      FixpointSolvers.log.verb(s"Function summaries:\n${res
+        .map {
+          case (f, s) =>
+            s"  function $f:\n${s
+              .map {
+                case (d1, m) =>
+                  s"${m.map { case (d2, e) => s"    ($d1,$d2): $e" }.mkString("\n")}"
+              }
+              .mkString("\n")}"
+        }
+        .mkString("\n")} ")
       res
     }
   }
@@ -175,12 +212,16 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       * Function summaries from phase 1.
       * Built when first invoked.
       */
-    lazy val summaries: mutable.Map[AFunDeclaration, mutable.Map[DL, mutable.Map[DL, EdgeFunction]]] = phase1.summaries()
+    lazy val summaries
+      : mutable.Map[AFunDeclaration,
+                    mutable.Map[DL, mutable.Map[DL, EdgeFunction]]] =
+      phase1.summaries()
 
     /**
       * The analysis lattice.
       */
-    val lattice: MapLattice[(CfgNode, DL), valuelattice.type] = new MapLattice(valuelattice)
+    val lattice: MapLattice[(CfgNode, DL), valuelattice.type] = new MapLattice(
+      valuelattice)
 
     /**
       * The current lattice element.
@@ -209,10 +250,12 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
                     // propagate to after-call, via the function summary and exit edges
                     summaries(entry.data)(d2).foreach {
                       case (d3, e2) =>
-                        edgesExitToAfterCall(entry.exit, call.afterCallNode)(d3).foreach {
-                          case (d4, e3) =>
-                            propagate(e3(e2(e(xnd))), (call.afterCallNode, d4))
-                        }
+                        edgesExitToAfterCall(entry.exit, call.afterCallNode)(d3)
+                          .foreach {
+                            case (d4, e3) =>
+                              propagate(e3(e2(e(xnd))),
+                                        (call.afterCallNode, d4))
+                          }
                     }
                 }
               }
@@ -237,7 +280,9 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       }
     }
 
-    val restructuredlattice: MapLattice[CfgNode, MapLattice[D, valuelattice.type]] = new MapLattice(new MapLattice(valuelattice))
+    val restructuredlattice
+      : MapLattice[CfgNode, MapLattice[D, valuelattice.type]] = new MapLattice(
+      new MapLattice(valuelattice))
 
     /**
       * Restructures the analysis output to match `restructuredlattice`.
@@ -246,8 +291,10 @@ abstract class IDESolver[D, L <: Lattice](val cfg: InterproceduralProgramCfg)(im
       y.foldLeft(Map[CfgNode, Map[D, valuelattice.Element]]()) {
         case (acc, ((n, dl), e)) =>
           dl match {
-            case Left(d) => acc + (n -> (acc.getOrElse(n, Map[D, valuelattice.Element]()) + (d -> e)))
-            case _ => acc // TODO: could use lifted lattice and map this to unreachable
+            case Left(d) =>
+              acc + (n -> (acc.getOrElse(n, Map[D, valuelattice.Element]()) + (d -> e)))
+            case _ =>
+              acc // TODO: could use lifted lattice and map this to unreachable
           }
       }
   }

@@ -34,7 +34,10 @@ trait CallContextFunctions[C <: CallContext] {
     * @param f the callee function
     * @return the context for the callee
     */
-  def makeCallContext(c: C, n: CfgCallNode, x: statelattice.Element, f: CfgFunEntryNode): C
+  def makeCallContext(c: C,
+                      n: CfgCallNode,
+                      x: statelattice.Element,
+                      f: CfgFunEntryNode): C
 }
 
 /**
@@ -66,7 +69,10 @@ trait CallStringFunctions extends CallContextFunctions[CallStringContext] {
   /**
     * Creates a context as the singleton list consisting of the call node (and ignoring the other arguments).
     */
-  def makeCallContext(c: CallStringContext, n: CfgCallNode, x: statelattice.Element, f: CfgFunEntryNode): CallStringContext =
+  def makeCallContext(c: CallStringContext,
+                      n: CfgCallNode,
+                      x: statelattice.Element,
+                      f: CfgFunEntryNode): CallStringContext =
     CallStringContext((n :: c.cs).slice(0, maxCallStringLength))
 }
 
@@ -92,6 +98,9 @@ trait FunctionalFunctions extends CallContextFunctions[FunctionalContext] {
   /**
     * Creates a context as the singleton list consisting of the call node (and ignoring the other arguments).
     */
-  def makeCallContext(c: FunctionalContext, n: CfgCallNode, x: statelattice.Element, f: CfgFunEntryNode): FunctionalContext =
+  def makeCallContext(c: FunctionalContext,
+                      n: CfgCallNode,
+                      x: statelattice.Element,
+                      f: CfgFunEntryNode): FunctionalContext =
     FunctionalContext(x)
 }

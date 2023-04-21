@@ -11,26 +11,36 @@ object ConstantPropagationAnalysis {
     /**
       * Intraprocedural analysis that uses the simple fixpoint solver.
       */
-    class SimpleSolver(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisSimpleSolver(cfg, ConstantPropagationLattice)
+    class SimpleSolver(cfg: IntraproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisSimpleSolver(cfg,
+                                                   ConstantPropagationLattice)
 
     /**
       * Intraprocedural analysis that uses the worklist solver.
       */
-    class WorklistSolver(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisWorklistSolver(cfg, ConstantPropagationLattice)
+    class WorklistSolver(cfg: IntraproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisWorklistSolver(cfg,
+                                                     ConstantPropagationLattice)
 
     /**
       * Intraprocedural analysis that uses the worklist solver with reachability.
       */
-    class WorklistSolverWithReachability(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisWorklistSolverWithReachability(cfg, ConstantPropagationLattice)
+    class WorklistSolverWithReachability(cfg: IntraproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisWorklistSolverWithReachability(
+          cfg,
+          ConstantPropagationLattice)
 
     /**
       * Intraprocedural analysis that uses the worklist solver with reachability and propagation-style.
       */
-    class WorklistSolverWithReachabilityAndPropagation(cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends IntraprocValueAnalysisWorklistSolverWithReachabilityAndPropagation(cfg, ConstantPropagationLattice)
+    class WorklistSolverWithReachabilityAndPropagation(
+        cfg: IntraproceduralProgramCfg)(implicit declData: DeclarationData)
+        extends IntraprocValueAnalysisWorklistSolverWithReachabilityAndPropagation(
+          cfg,
+          ConstantPropagationLattice)
   }
 
   object Interprocedural {
@@ -38,25 +48,35 @@ object ConstantPropagationAnalysis {
     /**
       * Interprocedural analysis that uses the worklist solver with reachability.
       */
-    class WorklistSolverWithReachability(cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends InterprocValueAnalysisWorklistSolverWithReachability(cfg, ConstantPropagationLattice)
+    class WorklistSolverWithReachability(cfg: InterproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends InterprocValueAnalysisWorklistSolverWithReachability(
+          cfg,
+          ConstantPropagationLattice)
 
     /**
       * Interprocedural analysis that uses the worklist solver with reachability and propagation-style.
       */
-    class WorklistSolverWithReachabilityAndPropagation(cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
-        extends InterprocValueAnalysisWorklistSolverWithReachabilityAndPropagation(cfg, ConstantPropagationLattice)
+    class WorklistSolverWithReachabilityAndPropagation(
+        cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData)
+        extends InterprocValueAnalysisWorklistSolverWithReachabilityAndPropagation(
+          cfg,
+          ConstantPropagationLattice)
 
     /**
       * Interprocedural analysis that uses the worklist solver with reachability and propagation-style.
       * with call-string context sensitivity.
       */
-    class CallString(cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData) extends CallStringValueAnalysis(cfg, ConstantPropagationLattice)
+    class CallString(cfg: InterproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends CallStringValueAnalysis(cfg, ConstantPropagationLattice)
 
     /**
       * Interprocedural analysis that uses the worklist solver with reachability and propagation-style.
       * with functional-approach context sensitivity.
       */
-    class Functional(cfg: InterproceduralProgramCfg)(implicit declData: DeclarationData) extends FunctionalValueAnalysis(cfg, ConstantPropagationLattice)
+    class Functional(cfg: InterproceduralProgramCfg)(
+        implicit declData: DeclarationData)
+        extends FunctionalValueAnalysis(cfg, ConstantPropagationLattice)
   }
 }

@@ -28,7 +28,8 @@ object ConcreteValues extends ValueSpecification {
   /**
     * Reference to field.
     */
-  case class ConcreteReferenceFieldValue(i: Int, field: String) extends ReferenceValue
+  case class ConcreteReferenceFieldValue(i: Int, field: String)
+      extends ReferenceValue
 
   /**
     * Function value.
@@ -38,45 +39,54 @@ object ConcreteValues extends ValueSpecification {
   /**
     * Record value.
     */
-  case class ConcreteRecordValue(fields: Map[String, EValue]) extends RecordValue
+  case class ConcreteRecordValue(fields: Map[String, EValue])
+      extends RecordValue
 
   val nullValue = ConcreteNullValue()
 
   val returnLoc = ConcreteReferenceValue(0)
 
-  def newLoc(): ReferenceValue = { lastLoc += 1; ConcreteReferenceValue(lastLoc) }
+  def newLoc(): ReferenceValue = {
+    lastLoc += 1; ConcreteReferenceValue(lastLoc)
+  }
 
   def constInt(i: Int): IntValue = ConcreteIntValue(i)
 
-  def eqq(x: EValue, y: EValue): IntValue = ConcreteIntValue(if (x == y) 1 else 0)
+  def eqq(x: EValue, y: EValue): IntValue =
+    ConcreteIntValue(if (x == y) 1 else 0)
 
   def eqqInt(x: IntValue, y: IntValue): Boolean = (x, y) match {
     case (x: ConcreteIntValue, y: ConcreteIntValue) => x == y
-    case _ => ???
+    case _                                          => ???
   }
 
   def divideInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
-    case (x: ConcreteIntValue, y: ConcreteIntValue) => ConcreteIntValue(x.i / y.i)
+    case (x: ConcreteIntValue, y: ConcreteIntValue) =>
+      ConcreteIntValue(x.i / y.i)
     case _ => ???
   }
 
   def greatThanInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
-    case (x: ConcreteIntValue, y: ConcreteIntValue) => ConcreteIntValue(if (x.i > y.i) 1 else 0)
+    case (x: ConcreteIntValue, y: ConcreteIntValue) =>
+      ConcreteIntValue(if (x.i > y.i) 1 else 0)
     case _ => ???
   }
 
   def timesInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
-    case (x: ConcreteIntValue, y: ConcreteIntValue) => ConcreteIntValue(x.i * y.i)
+    case (x: ConcreteIntValue, y: ConcreteIntValue) =>
+      ConcreteIntValue(x.i * y.i)
     case _ => ???
   }
 
   def plusInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
-    case (x: ConcreteIntValue, y: ConcreteIntValue) => ConcreteIntValue(x.i + y.i)
+    case (x: ConcreteIntValue, y: ConcreteIntValue) =>
+      ConcreteIntValue(x.i + y.i)
     case _ => ???
   }
 
   def minusInt(x: IntValue, y: IntValue): IntValue = (x, y) match {
-    case (x: ConcreteIntValue, y: ConcreteIntValue) => ConcreteIntValue(x.i - y.i)
+    case (x: ConcreteIntValue, y: ConcreteIntValue) =>
+      ConcreteIntValue(x.i - y.i)
     case _ => ???
   }
 

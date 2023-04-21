@@ -44,7 +44,7 @@ object AstOps {
     def declaredLocals: Set[ADeclaration] =
       n match {
         case varr: AVarStmt => varr.declIds.toSet
-        case _ => Set()
+        case _              => Set()
       }
 
     /**
@@ -58,11 +58,11 @@ object AstOps {
             case id: AIdentifier =>
               id.declaration match {
                 case local: AIdentifierDeclaration => ids += local
-                case fun: AFunDeclaration => ids += fun
+                case fun: AFunDeclaration          => ids += fun
               }
             case decl: AIdentifierDeclaration => ids += decl
-            case fun: AFunDeclaration => ids += fun
-            case _ =>
+            case fun: AFunDeclaration         => ids += fun
+            case _                            =>
           }
           visitChildren(node, ())
         }
@@ -80,7 +80,7 @@ object AstOps {
         override def visit(node: AstNode, arg: Unit): Unit =
           node match {
             case alloc: AAlloc => allocs += alloc
-            case _ => visitChildren(node, ())
+            case _             => visitChildren(node, ())
           }
       }
       allocsFinder.visit(n, ())
@@ -96,7 +96,7 @@ object AstOps {
         override def visit(node: AstNode, arg: Unit): Unit =
           node match {
             case num: ANumber => numbers += num
-            case _ => visitChildren(node, ())
+            case _            => visitChildren(node, ())
           }
       }
       numFinder.visit(n, ())
@@ -136,7 +136,7 @@ object AstOps {
         override def visit(node: AstNode, arg: Unit): Unit =
           node match {
             case _: AInput => res = true;
-            case _ => visitChildren(node, ())
+            case _         => visitChildren(node, ())
           }
       }.visit(n, ())
       res
@@ -181,7 +181,8 @@ object AstOps {
     *
     * (For information about Scala's implicit classes, see [[tip.ast.AstNodeData.AstNodeWithDeclaration]].)
     */
-  implicit class UnlabelledNode[X <: AstNode](val n: X)(implicit declData: DeclarationData) {
+  implicit class UnlabelledNode[X <: AstNode](val n: X)(
+      implicit declData: DeclarationData) {
 
     /**
       * The members of the node, excluding `loc`.
@@ -205,12 +206,13 @@ object AstOps {
               if (this.getClass != n.getClass)
                 false
               else {
-                this.nonLocMembers.zip(n.nonLocMembers).foldLeft(true) { (a, p) =>
-                  (p._1, p._2) match {
-                    case (p1: AstNode, p2: AstNode) =>
-                      a && (p1: UnlabelledNode[_]) == (p2: UnlabelledNode[_])
-                    case (_, _) => a && p._1 == p._2
-                  }
+                this.nonLocMembers.zip(n.nonLocMembers).foldLeft(true) {
+                  (a, p) =>
+                    (p._1, p._2) match {
+                      case (p1: AstNode, p2: AstNode) =>
+                        a && (p1: UnlabelledNode[_]) == (p2: UnlabelledNode[_])
+                      case (_, _) => a && p._1 == p._2
+                    }
                 }
               }
           }
@@ -220,7 +222,7 @@ object AstOps {
     override lazy val hashCode: Int =
       n.getClass.hashCode * (nonLocMembers map {
         case id: AIdentifier => id.declaration.hashCode()
-        case x => x.hashCode()
+        case x               => x.hashCode()
       }).product
 
     override def toString: String = n.toString

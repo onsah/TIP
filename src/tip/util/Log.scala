@@ -23,7 +23,8 @@ object Log {
     * @param forcedLevel log level
     * @param ct class the logger belongs to
     */
-  def logger[A: ClassTag](forcedLevel: Level.Level = defaultLevel)(implicit ct: ClassTag[A]): Logger =
+  def logger[A: ClassTag](forcedLevel: Level.Level = defaultLevel)(
+      implicit ct: ClassTag[A]): Logger =
     Logger(ct.runtimeClass.getSimpleName, forcedLevel)
 }
 
@@ -36,7 +37,9 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
 //
 //  tag = s"[${tag.padTo(TAG_MAX_LEN, ' ')}]"
 
-  private def log(message: String, t: Throwable, msgLev: Log.Level.Level): Unit = {
+  private def log(message: String,
+                  t: Throwable,
+                  msgLev: Log.Level.Level): Unit = {
     if (msgLev.id <= level.id || msgLev.id < Log.defaultLevel.id) {
       var account = 0
       val color = msgLev match {
@@ -70,7 +73,8 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
   /**
     * Writes a message and a stack trace to the log at level "error".
     */
-  def error(message: String, t: Throwable): Unit = log(message, t, Log.Level.Error)
+  def error(message: String, t: Throwable): Unit =
+    log(message, t, Log.Level.Error)
 
   /**
     * Writes a message to the log at level "warn" .
@@ -80,7 +84,8 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
   /**
     * Writes a message and a stack trace to the log at level "warn".
     */
-  def warn(message: String, t: Throwable): Unit = log(message, t, Log.Level.Warn)
+  def warn(message: String, t: Throwable): Unit =
+    log(message, t, Log.Level.Warn)
 
   /**
     * Writes a message to the log at level "info" .
@@ -90,7 +95,8 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
   /**
     * Writes a message and a stack trace to the log at level "info".
     */
-  def info(message: String, t: Throwable): Unit = log(message, t, Log.Level.Info)
+  def info(message: String, t: Throwable): Unit =
+    log(message, t, Log.Level.Info)
 
   /**
     * Writes a message to the log at level "debug" .
@@ -100,7 +106,8 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
   /**
     * Writes a message and a stack trace to the log at level "debug".
     */
-  def debug(message: String, t: Throwable): Unit = log(message, t, Log.Level.Debug)
+  def debug(message: String, t: Throwable): Unit =
+    log(message, t, Log.Level.Debug)
 
   /**
     * Writes a message to the log at level "verbose" .
@@ -110,6 +117,7 @@ final case class Logger(var tag: String, var level: Log.Level.Level) {
   /**
     * Writes a message and a stack trace to the log at level "verbose".
     */
-  def verb(message: String, t: Throwable): Unit = log(message, t, Log.Level.Verbose)
+  def verb(message: String, t: Throwable): Unit =
+    log(message, t, Log.Level.Verbose)
 
 }

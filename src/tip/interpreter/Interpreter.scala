@@ -9,7 +9,8 @@ import scala.util.{Failure, Success, Try}
 /**
   * Interpreter for TIP programs.
   */
-abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData) {
+abstract class Interpreter(program: AProgram)(
+    implicit declData: DeclarationData) {
 
   val spec: ValueSpecification // specification of values and operations used by the interpreter
 
@@ -28,9 +29,11 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     def values = content.values
 
     def apply(key: ReferenceValue): Value = content(key)
-    def getOrElse(key: ReferenceValue, default: => Value): Value = get(key).getOrElse(default)
+    def getOrElse(key: ReferenceValue, default: => Value): Value =
+      get(key).getOrElse(default)
     def ++(xs: Iterable[(ReferenceValue, Value)]): Store =
-      xs.seq.foldLeft(this)((acc: Store, kv: (ReferenceValue, Value)) => acc + kv)
+      xs.seq.foldLeft(this)((acc: Store, kv: (ReferenceValue, Value)) =>
+        acc + kv)
     def --(xs: Iterable[ReferenceValue]): Store =
       xs.seq.foldLeft(this)((acc: Store, key: ReferenceValue) => acc - key)
 
@@ -47,31 +50,38 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
   def semp(initEnv: Env, initStore: Store): (IntValue, Store) = {
     capturedOut.clear()
     // Make an initial environment with a location for each function
-    val boundEnv = program.funs.foldLeft(initEnv) { (a: Env, f: AFunDeclaration) =>
-      a + (f -> newLoc())
+    val boundEnv = program.funs.foldLeft(initEnv) {
+      (a: Env, f: AFunDeclaration) =>
+        a + (f -> newLoc())
     }
     // Create a location for each formal argument of main
-    val envWithInputArgs = program.mainFunction.params.foldLeft(boundEnv) { (a: Env, id: AIdentifierDeclaration) =>
-      a + (id -> newLoc())
+    val envWithInputArgs = program.mainFunction.params.foldLeft(boundEnv) {
+      (a: Env, id: AIdentifierDeclaration) =>
+        a + (id -> newLoc())
     }
     // Store the functions in the associated locations
-    val boundStore = program.funs.foldLeft(initStore) { (s: Store, f: AFunDeclaration) =>
-      s + (boundEnv(f) -> spec.mkFun(f))
+    val boundStore = program.funs.foldLeft(initStore) {
+      (s: Store, f: AFunDeclaration) =>
+        s + (boundEnv(f) -> spec.mkFun(f))
     }
     // Store the input in the associated argument locations
-    val storeWithInputArgs = program.mainFunction.params.foldLeft(boundStore) { (s: Store, id: AIdentifierDeclaration) =>
-      val (v, s2) = input(AIdentifier(id.name, id.loc), boundEnv, s)
-      s2 + (envWithInputArgs(id) -> v)
+    val storeWithInputArgs = program.mainFunction.params.foldLeft(boundStore) {
+      (s: Store, id: AIdentifierDeclaration) =>
+        val (v, s2) = input(AIdentifier(id.name, id.loc), boundEnv, s)
+        s2 + (envWithInputArgs(id) -> v)
     }
     // Execute the main function
-    val (_, cs) = semc(program.mainFunction.stmts, envWithInputArgs, storeWithInputArgs)
+    val (_, cs) =
+      semc(program.mainFunction.stmts, envWithInputArgs, storeWithInputArgs)
     // Return the result, if type int
     cs(returnLoc) match {
       case x: IntValue =>
         output(x)
         (x, cs)
       case _ =>
-        errorReturnNotInt(program.mainFunction.stmts.ret.exp.loc, program.mainFunction, cs)
+        errorReturnNotInt(program.mainFunction.stmts.ret.exp.loc,
+                          program.mainFunction,
+                          cs)
     }
   }
 
@@ -84,7 +94,10 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     * @param store        the initial store
     * @return the resulting store
     */
-  private def semf(f: AFunDeclaration, actualParams: List[EValue], env: Env, store: Store): Store = {
+  private def semf(f: AFunDeclaration,
+                   actualParams: List[EValue],
+                   env: Env,
+                   store: Store): Store = {
     // Extend the environment with ...
     val extEnv = (
       // ... the formal parameters
@@ -101,8 +114,9 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     ).toMap
     val nEnv = env ++ extEnv
     // Write the actual parameters to the corresponding locations in the store
-    val nStore = f.params.zip(actualParams).foldLeft(store) { (ns: Store, p: (AIdentifierDeclaration, EValue)) =>
-      ns + (extEnv(p._1) -> p._2)
+    val nStore = f.params.zip(actualParams).foldLeft(store) {
+      (ns: Store, p: (AIdentifierDeclaration, EValue)) =>
+        ns + (extEnv(p._1) -> p._2)
     }
     // Execute the body
     val (_, finalStore) = semc(f.stmts, nEnv, nStore)
@@ -110,7 +124,10 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     finalStore -- extEnv.values
   }
 
-  protected def branchTaken(guard: AExpr, value: EValue, branch: Boolean, store: Store): Store =
+  protected def branchTaken(guard: AExpr,
+                            value: EValue,
+                            branch: Boolean,
+                            store: Store): Store =
     store
 
   /**
@@ -128,7 +145,8 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
         store.getOrElse(lv, errorUninitializedLocation(stm.loc, s1)) match {
           case rec: RecordValue =>
             val (rv, s2) = semeright(right, env, s1)
-            if (rv.isInstanceOf[RecordValue]) errorWriteFieldRecord(stm.loc, rv, s2)
+            if (rv.isInstanceOf[RecordValue])
+              errorWriteFieldRecord(stm.loc, rv, s2)
             (env, s2 + (lv -> mkRecord(rec.fields + (field -> rv))))
           case _ =>
             errorAccessNonRecord(stm.loc, lv, s1)
@@ -138,7 +156,8 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
         val (rv, s2) = semeright(right, env, s1)
         (env, s2 + (lv -> rv))
       case block: ABlock =>
-        block.body.foldLeft((env, store))((acc: (Env, Store), stm: AStmt) => semc(stm, acc._1, acc._2))
+        block.body.foldLeft((env, store))((acc: (Env, Store), stm: AStmt) =>
+          semc(stm, acc._1, acc._2))
       case AIfStmt(guard, ifBranch, elseBranch, loc) =>
         val (gv, s1) = semeright(guard, env, store)
         gv match {
@@ -156,7 +175,8 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
       case err: AErrorStmt =>
         val (ev, s1) = semeright(err.exp, env, store)
         ev match {
-          case i: IntValue => throw new ExecutionError(s"Execution error, code: ${i.i}", s1)
+          case i: IntValue =>
+            throw new ExecutionError(s"Execution error, code: ${i.i}", s1)
           case _ => errorErrorNonInt(stm.loc, ev, store)
         }
       case w: AWhileStmt =>
@@ -196,14 +216,16 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     * @param store the initial store
     * @return the resulting location and store
     */
-  protected def semeref(exp: ReferenceAssignable, env: Env, store: Store): (ReferenceValue, Store) =
+  protected def semeref(exp: ReferenceAssignable,
+                        env: Env,
+                        store: Store): (ReferenceValue, Store) =
     exp match {
       case id: AIdentifier => (env(id.declaration), store)
       case ADerefWrite(subexp, loc) =>
         semeright(subexp, env, store) match {
           case (pref: ReferenceValue, s1) => (pref, s1)
-          case (_: NullValue, s1) => errorNullDereference(loc, s1)
-          case (x, s1) => errorDerefNotPointer(loc, x, s1)
+          case (_: NullValue, s1)         => errorNullDereference(loc, s1)
+          case (x, s1)                    => errorDerefNotPointer(loc, x, s1)
         }
       case _ => ???
     }
@@ -216,14 +238,17 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     * @param store the initial store
     * @return the resulting location, field, and store
     */
-  protected def semeref(exp: FieldAssignable, env: Env, store: Store): (ReferenceValue, String, Store) =
+  protected def semeref(exp: FieldAssignable,
+                        env: Env,
+                        store: Store): (ReferenceValue, String, Store) =
     exp match {
-      case ADirectFieldWrite(id, field, _) => (env(id.declaration), field, store)
+      case ADirectFieldWrite(id, field, _) =>
+        (env(id.declaration), field, store)
       case AIndirectFieldWrite(fexp, field, loc) =>
         semeright(fexp, env, store) match {
           case (pref: ReferenceValue, s1) => (pref, field, s1)
-          case (_: NullValue, s1) => errorNullDereference(loc, s1)
-          case (x, s1) => errorDerefNotPointer(loc, x, s1)
+          case (_: NullValue, s1)         => errorNullDereference(loc, s1)
+          case (x, s1)                    => errorDerefNotPointer(loc, x, s1)
         }
     }
 
@@ -250,11 +275,12 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
             errorAccessNonRecord(access.loc, tv, s1)
         }
       case record: ARecord =>
-        val (fields, s2) = record.fields.foldLeft((Map[String, EValue](), store)) {
-          case ((m, s), f) =>
-            val (v, s1) = semeright(f.exp, env, s)
-            (m + (f.field -> v), s1)
-        }
+        val (fields, s2) =
+          record.fields.foldLeft((Map[String, EValue](), store)) {
+            case ((m, s), f) =>
+              val (v, s1) = semeright(f.exp, env, s)
+              (m + (f.field -> v), s1)
+          }
         (mkRecord(fields), s2)
       case e: ABinaryOp =>
         val (left: EValue, s1) = semeright(e.left, env, store)
@@ -265,12 +291,12 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
             (left, right) match {
               case (lv: IntValue, rv: IntValue) =>
                 op match {
-                  case Eqq => spec.eqq(lv, rv)
-                  case Divide => spec.divideInt(lv, rv)
+                  case Eqq       => spec.eqq(lv, rv)
+                  case Divide    => spec.divideInt(lv, rv)
                   case GreatThan => spec.greatThanInt(lv, rv)
-                  case Minus => spec.minusInt(lv, rv)
-                  case Plus => spec.plusInt(lv, rv)
-                  case Times => spec.timesInt(lv, rv)
+                  case Minus     => spec.minusInt(lv, rv)
+                  case Plus      => spec.plusInt(lv, rv)
+                  case Times     => spec.timesInt(lv, rv)
                 }
               case _ => errorArithmeticOnNonInt(exp.loc, op, s2)
             }
@@ -293,7 +319,7 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
         val (cv, s1) = semeright(content, env, store)
         val l = newLoc()
         (l, s1 + (l -> cv))
-      case ANull(_) => (spec.nullValue, store)
+      case ANull(_)          => (spec.nullValue, store)
       case ANumber(value, _) => (spec.constInt(value), store)
       case AVarRef(e: AIdentifier, _) =>
         (env(e.declaration), store)
@@ -302,10 +328,11 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
         funValue match {
           case f: FunValue =>
             val (actualParamsValues, computedStore) =
-              actualParams.foldRight((List[EValue](), s1)) { (arg: AExpr, p: (List[EValue], Store)) =>
-                val (computed, s1) = p
-                val (v, s2) = semeright(arg, env, s1)
-                (v :: computed, s2)
+              actualParams.foldRight((List[EValue](), s1)) {
+                (arg: AExpr, p: (List[EValue], Store)) =>
+                  val (computed, s1) = p
+                  val (v, s2) = semeright(arg, env, s1)
+                  (v :: computed, s2)
               }
             val finStore = semf(f.fun, actualParamsValues, env, computedStore)
             (finStore(returnLoc), finStore)
@@ -344,52 +371,82 @@ abstract class Interpreter(program: AProgram)(implicit declData: DeclarationData
     }
   }
 
-  class ExecutionError(message: String, val store: Store) extends TipProgramException(s"Runtime error: $message")
+  class ExecutionError(message: String, val store: Store)
+      extends TipProgramException(s"Runtime error: $message")
 
   def errorCallNotFunction(loc: Loc, funValue: EValue, store: Store) =
-    throw new ExecutionError(s"Call to a non-function $funValue ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Call to a non-function $funValue ${loc.toStringLong}",
+      store)
 
   def errorOutputNotInt(loc: Loc, store: Store) =
-    throw new ExecutionError(s"Output not supported for non-integer values ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Output not supported for non-integer values ${loc.toStringLong}",
+      store)
 
   def errorInputNotInt(loc: Loc, store: Store) =
-    throw new ExecutionError(s"Input not supported for non-integer values ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Input not supported for non-integer values ${loc.toStringLong}",
+      store)
 
   def errorErrorNonInt(loc: Loc, v: EValue, store: Store) =
-    throw new ExecutionError(s"Error statement non-integer value $v ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Error statement non-integer value $v ${loc.toStringLong}",
+      store)
 
   def errorArithmeticOnNonInt(loc: Loc, op: BinaryOperator, store: Store) =
-    throw new ExecutionError(s"Unable to apply the operator $op to non-integer value ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Unable to apply the operator $op to non-integer value ${loc.toStringLong}",
+      store)
 
   def errorReturnNotInt(loc: Loc, fun: AFunDeclaration, store: Store) =
-    throw new ExecutionError(s"Return statement returning non-integer in function ${fun.name} ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Return statement returning non-integer in function ${fun.name} ${loc.toStringLong}",
+      store)
 
   def errorNullDereference(loc: Loc, store: Store) =
-    throw new ExecutionError(s"Null pointer dereference ${loc.toStringLong}", store)
+    throw new ExecutionError(s"Null pointer dereference ${loc.toStringLong}",
+                             store)
 
   def errorConditionNotInt(loc: Loc, store: Store) =
-    throw new ExecutionError(s"Branch condition not evaluating to an integer ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Branch condition not evaluating to an integer ${loc.toStringLong}",
+      store)
 
   def errorDerefNotPointer(loc: Loc, x: EValue, store: Store) =
-    throw new ExecutionError(s"Dereferencing non-pointer $x ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Dereferencing non-pointer $x ${loc.toStringLong}",
+      store)
 
   def errorAccessNonRecord(loc: Loc, x: EValue, store: Store) =
-    throw new ExecutionError(s"Accessing field on non-record value $x ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Accessing field on non-record value $x ${loc.toStringLong}",
+      store)
 
   def errorWriteFieldRecord(loc: Loc, x: EValue, store: Store) =
-    throw new ExecutionError(s"Writing record to field $x ${loc.toStringLong}", store)
+    throw new ExecutionError(s"Writing record to field $x ${loc.toStringLong}",
+                             store)
 
-  def errorAccessMissingField(loc: Loc, rec: RecordValue, field: String, store: Store) =
-    throw new ExecutionError(s"Accessing missing field $field in record $rec ${loc.toStringLong}", store)
+  def errorAccessMissingField(loc: Loc,
+                              rec: RecordValue,
+                              field: String,
+                              store: Store) =
+    throw new ExecutionError(
+      s"Accessing missing field $field in record $rec ${loc.toStringLong}",
+      store)
 
   def errorUninitializedLocation(loc: Loc, store: Store) =
-    throw new ExecutionError(s"Accessing uninitialized memory location ${loc.toStringLong}", store)
+    throw new ExecutionError(
+      s"Accessing uninitialized memory location ${loc.toStringLong}",
+      store)
 }
 
 /**
   * Interpreter that uses concrete values.
   */
-class ConcreteInterpreter(val program: AProgram)(implicit declData: DeclarationData) extends Interpreter(program) {
+class ConcreteInterpreter(val program: AProgram)(
+    implicit declData: DeclarationData)
+    extends Interpreter(program) {
   val spec = ConcreteValues
   type Extra = Unit
   def semp(): spec.IntValue = semp(Map(), Store(Map(), ()))._1

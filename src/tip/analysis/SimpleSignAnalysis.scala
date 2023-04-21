@@ -15,7 +15,8 @@ import scala.collection.immutable.Set
   * This is a specialized version of `SignAnalysis.Intraprocedural.SimpleSolver`
   * where most of the involved traits, classes, methods, and fields have been inlined.
   */
-class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) extends FlowSensitiveAnalysis(true) {
+class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData)
+    extends FlowSensitiveAnalysis(true) {
 
   /**
     * The lattice of abstract values.
@@ -25,17 +26,20 @@ class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) ex
   /**
     * Set of declared variables, used by `statelattice`.
     */
-  val declaredVars: Set[ADeclaration] = cfg.nodes.flatMap(_.declaredVarsAndParams)
+  val declaredVars: Set[ADeclaration] =
+    cfg.nodes.flatMap(_.declaredVarsAndParams)
 
   /**
     * The lattice of abstract states.
     */
-  val statelattice: MapLattice[ADeclaration, SignLattice.type] = new MapLattice(valuelattice)
+  val statelattice: MapLattice[ADeclaration, SignLattice.type] = new MapLattice(
+    valuelattice)
 
   /**
     * The program lattice.
     */
-  val lattice: MapLattice[CfgNode, statelattice.type] = new MapLattice(statelattice)
+  val lattice: MapLattice[CfgNode, statelattice.type] = new MapLattice(
+    statelattice)
 
   /**
     * The domain of the program lattice.
@@ -45,25 +49,26 @@ class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) ex
   /**
     * Abstract evaluation of expressions.
     */
-  def eval(exp: AExpr, env: statelattice.Element)(implicit declData: DeclarationData): valuelattice.Element = {
+  def eval(exp: AExpr, env: statelattice.Element)(
+      implicit declData: DeclarationData): valuelattice.Element = {
     import valuelattice._
     exp match {
       case id: AIdentifier => env(id)
-      case n: ANumber => num(n.value)
+      case n: ANumber      => num(n.value)
       case bin: ABinaryOp =>
         val left = eval(bin.left, env)
         val right = eval(bin.right, env)
         bin.operator match {
-          case Eqq => eqq(left, right)
+          case Eqq       => eqq(left, right)
           case GreatThan => gt(left, right)
-          case Divide => div(left, right)
-          case Minus => minus(left, right)
-          case Plus => plus(left, right)
-          case Times => times(left, right)
-          case _ => ???
+          case Divide    => div(left, right)
+          case Minus     => minus(left, right)
+          case Plus      => plus(left, right)
+          case Times     => times(left, right)
+          case _         => ???
         }
       case _: AInput => valuelattice.top
-      case _ => ???
+      case _         => ???
     }
   }
 
@@ -77,7 +82,8 @@ class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) ex
   /**
     * Transfer functions for the different kinds of statements.
     */
-  def localTransfer(n: CfgNode, s: statelattice.Element): statelattice.Element = {
+  def localTransfer(n: CfgNode,
+                    s: statelattice.Element): statelattice.Element = {
     NoPointers.assertContainsNode(n.data)
     NoCalls.assertContainsNode(n.data)
     NoRecords.assertContainsNode(n.data)
@@ -88,7 +94,8 @@ class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) ex
           case varr: AVarStmt => ??? //<--- Complete here
 
           // assignments
-          case AAssignStmt(id: AIdentifier, right, _) => ??? //<--- Complete here
+          case AAssignStmt(id: AIdentifier, right, _) =>
+            ??? //<--- Complete here
 
           // all others: like no-ops
           case _ => s
@@ -112,7 +119,8 @@ class SimpleSignAnalysis(cfg: ProgramCfg)(implicit declData: DeclarationData) ex
     */
   def join(n: CfgNode, o: lattice.Element): lattice.sublattice.Element = {
     val states = indep(n).map(o(_))
-    states.foldLeft(lattice.sublattice.bottom)((acc, pred) => lattice.sublattice.lub(acc, pred))
+    states.foldLeft(lattice.sublattice.bottom)((acc, pred) =>
+      lattice.sublattice.lub(acc, pred))
   }
 
   /**

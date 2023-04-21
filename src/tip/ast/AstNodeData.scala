@@ -26,7 +26,8 @@ object AstNodeData {
     * Note that the value of the field is obtained via the implicit parameter `data`.
     * For more information about implicit classes in Scala, see [[https://docs.scala-lang.org/overviews/core/implicit-classes.html]].
     */
-  implicit class AstNodeWithDeclaration(n: AIdentifier)(implicit val data: DeclarationData) {
+  implicit class AstNodeWithDeclaration(n: AIdentifier)(
+      implicit val data: DeclarationData) {
     def declaration: ADeclaration = data(n)
   }
 
@@ -39,9 +40,11 @@ object AstNodeData {
     def theType: Option[Type] = data.getOrElse(n, None)
 
     private def printer: PartialFunction[AstNode, String] = {
-      case id: AIdentifierDeclaration => s"${id.name}: ${id.theType.getOrElse("??")}"
+      case id: AIdentifierDeclaration =>
+        s"${id.name}: ${id.theType.getOrElse("??")}"
       case f: AFunDeclaration =>
-        s"${f.name}(${f.params.map(_.name).mkString(",")}): ${f.theType.getOrElse("??")}\n${f.stmts.print(printer)}"
+        s"${f.name}(${f.params.map(_.name).mkString(",")}): ${f.theType
+          .getOrElse("??")}\n${f.stmts.print(printer)}"
     }
 
     def toTypedString: String = n.print(printer)

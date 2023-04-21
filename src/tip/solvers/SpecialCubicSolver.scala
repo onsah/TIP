@@ -21,10 +21,10 @@ class SpecialCubicSolver[V] {
   }
 
   private class Node(
-    val succ: mutable.Set[V] = mutable.Set(), // note: the edges between nodes go via the variables
-    val tokenSol: mutable.BitSet = new mutable.BitSet(), // the current solution bitvector
-    val fromTriggers: mutable.Set[V] = mutable.Set(), // universally quantified constraints from the current node
-    val toTriggers: mutable.Set[V] = mutable.Set() // universally quantified constraints to the current node
+      val succ: mutable.Set[V] = mutable.Set(), // note: the edges between nodes go via the variables
+      val tokenSol: mutable.BitSet = new mutable.BitSet(), // the current solution bitvector
+      val fromTriggers: mutable.Set[V] = mutable.Set(), // universally quantified constraints from the current node
+      val toTriggers: mutable.Set[V] = mutable.Set() // universally quantified constraints to the current node
   )
 
   /**
@@ -123,7 +123,8 @@ class SpecialCubicSolver[V] {
     * Adds a constraint of type &#8704;<i>t</i>&#8712;&#10214;x&#10215;: &#10214;<i>t</i>&#10215;&#8838;&#10214;y&#10215;.
     */
   def addUniversallyQuantifiedFromConstraint(x: V, y: V): Unit = {
-    log.verb(s"Adding constraint \u2200t \u2208 \u27E6$x\u27E7: \u27E6t\u27E7 \u2286 \u27E6$y\u27E7")
+    log.verb(
+      s"Adding constraint \u2200t \u2208 \u27E6$x\u27E7: \u27E6t\u27E7 \u2286 \u27E6$y\u27E7")
     val xn = getOrMakeNode(x)
     xn.fromTriggers += y
     for (t <- xn.tokenSol)
@@ -135,7 +136,8 @@ class SpecialCubicSolver[V] {
     * Adds a constraint of type &#8704;<i>t</i>&#8712;&#10214;x&#10215;: &#10214;y&#10215;&#8838;&#10214;<i>t</i>&#10215;.
     */
   def addUniversallyQuantifiedToConstraint(x: V, y: V): Unit = {
-    log.verb(s"Adding constraint \u2200t \u2208 \u27E6$x\u27E7: \u27E6$y\u27E7 \u2286 \u27E6t\u27E7")
+    log.verb(
+      s"Adding constraint \u2200t \u2208 \u27E6$x\u27E7: \u27E6$y\u27E7 \u2286 \u27E6t\u27E7")
     val xn = getOrMakeNode(x)
     xn.toTriggers += y
     for (t <- xn.tokenSol)
@@ -147,5 +149,7 @@ class SpecialCubicSolver[V] {
     * Returns the current solution as a map from variables to token sets.
     */
   def getSolution: Map[V, Set[V]] =
-    varToNode.keys.map(v => v -> getOrMakeNode(v).tokenSol.map(intToToken).toSet).toMap
+    varToNode.keys
+      .map(v => v -> getOrMakeNode(v).tokenSol.map(intToToken).toSet)
+      .toMap
 }

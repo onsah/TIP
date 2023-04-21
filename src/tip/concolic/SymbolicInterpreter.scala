@@ -5,14 +5,22 @@ import tip.ast.AstNodeData.DeclarationData
 import tip.interpreter.Interpreter
 import SMTSolver.Symbol
 
-abstract class SymbolicInterpreter(program: AProgram)(implicit declData: DeclarationData) extends Interpreter(program) {
+abstract class SymbolicInterpreter(program: AProgram)(
+    implicit declData: DeclarationData)
+    extends Interpreter(program) {
   val spec = SymbolicValues
   import spec._
   type Extra = ConcolicState
 
-  case class ConcolicState(symbols: List[Symbol] = Nil, ct: ExecutionTree, counter: Int = 0, inputs: List[Int], usedInputs: List[Int] = Nil) {
+  case class ConcolicState(symbols: List[Symbol] = Nil,
+                           ct: ExecutionTree,
+                           counter: Int = 0,
+                           inputs: List[Int],
+                           usedInputs: List[Int] = Nil) {
     def usedInput(symbol: Symbol, num: Int): ConcolicState =
-      this.copy(symbols = symbols :+ symbol, usedInputs = usedInputs :+ num, counter = counter + 1)
+      this.copy(symbols = symbols :+ symbol,
+                usedInputs = usedInputs :+ num,
+                counter = counter + 1)
     def getInput: Int =
       if (counter < inputs.length) {
         inputs(counter)
@@ -30,14 +38,21 @@ abstract class SymbolicInterpreter(program: AProgram)(implicit declData: Declara
   def semp(): IntValue =
     semp(new ExecutionTreeRoot(), Nil)._1
 
-  override protected def branchTaken(guard: AExpr, value: EValue, branch: Boolean, store: Store): Store =
+  override protected def branchTaken(guard: AExpr,
+                                     value: EValue,
+                                     branch: Boolean,
+                                     store: Store): Store =
     value match {
       case x: SymbIntValue =>
-        store.setExtra(store.extra.copy(ct = store.extra.ct.branch(guard, x.symbolic, branch)))
+        store.setExtra(
+          store.extra.copy(
+            ct = store.extra.ct.branch(guard, x.symbolic, branch)))
       case _ => store
     }
 
-  override protected def input(exp: AExpr, env: Env, store: Store): (EValue, Store) = {
+  override protected def input(exp: AExpr,
+                               env: Env,
+                               store: Store): (EValue, Store) = {
     val newSymbol = new Symbol(exp.loc, store.extra.counter)
     val num = store.extra.getInput
     val v = SymbIntValue(num, newSymbol)

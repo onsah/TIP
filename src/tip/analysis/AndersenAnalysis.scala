@@ -6,7 +6,9 @@ import tip.util.Log
 import tip.ast.AstNodeData.DeclarationData
 import scala.language.implicitConversions
 
-class AndersenAnalysis(program: AProgram)(implicit declData: DeclarationData) extends DepthFirstAstVisitor[Unit] with PointsToAnalysis {
+class AndersenAnalysis(program: AProgram)(implicit declData: DeclarationData)
+    extends DepthFirstAstVisitor[Unit]
+    with PointsToAnalysis {
 
   val log = Log.logger[this.type]()
 
@@ -21,7 +23,9 @@ class AndersenAnalysis(program: AProgram)(implicit declData: DeclarationData) ex
   val solver = new SimpleCubicSolver[Cell, Cell]
 
   import AstOps._
-  val cells: Set[Cell] = (program.appearingIds.map(Var): Set[Cell]) union program.appearingAllocs.map(Alloc)
+  val cells
+    : Set[Cell] = (program.appearingIds.map(Var): Set[Cell]) union program.appearingAllocs
+    .map(Alloc)
 
   NormalizedForPointsToAnalysis.assertContainsProgram(program)
   NoRecords.assertContainsProgram(program)
@@ -43,11 +47,18 @@ class AndersenAnalysis(program: AProgram)(implicit declData: DeclarationData) ex
     implicit def allocToTarget(alloc: AAlloc): Alloc = Alloc(alloc)
 
     node match {
-      case AAssignStmt(id: AIdentifier, alloc: AAlloc, _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, AVarRef(id2: AIdentifier, _), _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, id2: AIdentifier, _) => ??? //<--- Complete here
-      case AAssignStmt(id1: AIdentifier, AUnaryOp(DerefOp, id2: AIdentifier, _), _) => ??? //<--- Complete here
-      case AAssignStmt(ADerefWrite(id1: AIdentifier, _), id2: AIdentifier, _) => ??? //<--- Complete here
+      case AAssignStmt(id: AIdentifier, alloc: AAlloc, _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier, AVarRef(id2: AIdentifier, _), _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier, id2: AIdentifier, _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(id1: AIdentifier,
+                       AUnaryOp(DerefOp, id2: AIdentifier, _),
+                       _) =>
+        ??? //<--- Complete here
+      case AAssignStmt(ADerefWrite(id1: AIdentifier, _), id2: AIdentifier, _) =>
+        ??? //<--- Complete here
       case _ =>
     }
     visitChildren(node, ())
@@ -60,18 +71,20 @@ class AndersenAnalysis(program: AProgram)(implicit declData: DeclarationData) ex
     val pointsTo = solver.getSolution.collect {
       case (v: Var, ts: Set[Cell]) =>
         v.id -> ts.map {
-          case Var(x) => x
+          case Var(x)   => x
           case Alloc(m) => m
         }
     }
-    log.info(s"Points-to:\n${pointsTo.mapValues(v => s"{${v.mkString(",")}}").mkString("\n")}")
+    log.info(
+      s"Points-to:\n${pointsTo.mapValues(v => s"{${v.mkString(",")}}").mkString("\n")}")
     pointsTo
   }
 
   /**
     * @inheritdoc
     */
-  def mayAlias(): (ADeclaration, ADeclaration) => Boolean = { (x: ADeclaration, y: ADeclaration) =>
-    solver.getSolution(Var(x)).intersect(solver.getSolution(Var(y))).nonEmpty
+  def mayAlias(): (ADeclaration, ADeclaration) => Boolean = {
+    (x: ADeclaration, y: ADeclaration) =>
+      solver.getSolution(Var(x)).intersect(solver.getSolution(Var(y))).nonEmpty
   }
 }

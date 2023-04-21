@@ -65,9 +65,10 @@ class EdgeFunctionLattice[L <: Lattice](val valuelattice: L) extends Lattice {
       else if (c == valuelattice.bottom) e
       else
         e match {
-          case IdEdge() => ??? // never reached with the currently implemented analyses
+          case IdEdge() =>
+            ??? // never reached with the currently implemented analyses
           case ConstEdge(ec) => ConstEdge(valuelattice.lub(c, ec))
-          case _ => e.joinWith(this)
+          case _             => e.joinWith(this)
         }
 
     override def toString = s"ConstEdge($c)"

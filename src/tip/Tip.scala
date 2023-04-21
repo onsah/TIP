@@ -3,7 +3,10 @@ package tip
 import java.io.{File, FileFilter}
 
 import org.parboiled2.ParseError
-import tip.analysis.FlowSensitiveAnalysis.{Analysis => dfa, AnalysisOption => dfo}
+import tip.analysis.FlowSensitiveAnalysis.{
+  Analysis => dfa,
+  AnalysisOption => dfo
+}
 import tip.analysis._
 import tip.ast.AstNodeData._
 import tip.ast.{AProgram, NoNormalizer}
@@ -95,7 +98,8 @@ object Tip extends App {
   val log = Log.logger[this.type]()
 
   def printUsage() =
-    print("""
+    print(
+      """
         | Usage:
         | tip <options> <source> [out]
         |
@@ -176,7 +180,8 @@ object Tip extends App {
 
       res match {
         case Failure(e: ParseError) =>
-          log.error(s"Failure parsing the program: $file\n${tipParser.formatError(e)}")
+          log.error(
+            s"Failure parsing the program: $file\n${tipParser.formatError(e)}")
           sys.exit(1)
         case Failure(e: Throwable) =>
           log.error(s"Failure parsing the program: $file", e)
@@ -188,24 +193,31 @@ object Tip extends App {
               // run normalizer
               log.verb("Normalizing")
               val p = options.normalizer.normalizeProgram(parsedNode)
-              Output.output(file, OtherOutput(OutputKindE.normalized), p.toString, options.out)
+              Output.output(file,
+                            OtherOutput(OutputKindE.normalized),
+                            p.toString,
+                            options.out)
               p
             }
 
           // run declaration analysis
           // (for information about the use of 'implicit', see [[tip.analysis.TypeAnalysis]])
           log.verb("Declaration analysis")
-          implicit val declData: DeclarationData = new DeclarationAnalysis(programNode).analyze()
+          implicit val declData: DeclarationData =
+            new DeclarationAnalysis(programNode).analyze()
 
           // run selected intraprocedural flow-sensitive analyses
-          if (options.cfg | options.dfAnalysis.exists(p => p._2 != dfo.Disabled && !dfo.interprocedural(p._2))) {
+          if (options.cfg | options.dfAnalysis.exists(
+                p => p._2 != dfo.Disabled && !dfo.interprocedural(p._2))) {
 
             // generate control-flow graph
             log.verb("Building intraprocedural control flow graphs")
-            val wcfg = IntraproceduralProgramCfg.generateFromProgram(programNode)
+            val wcfg =
+              IntraproceduralProgramCfg.generateFromProgram(programNode)
             if (options.cfg)
-              Output.output(file, OtherOutput(OutputKindE.cfg), wcfg.toDot({ x =>
-                x.toString
+              Output.output(file, OtherOutput(OutputKindE.cfg), wcfg.toDot({
+                x =>
+                  x.toString
               }, Output.dotIder), options.out)
 
             options.dfAnalysis.foreach {
@@ -215,18 +227,25 @@ object Tip extends App {
                     // run the analysis
                     log.verb(s"Performing ${an.getClass.getSimpleName}")
                     val res = an.analyze().asInstanceOf[Map[CfgNode, _]]
-                    Output.output(file, DataFlowOutput(s), wcfg.toDot(Output.labeler(res, an.stateAfterNode), Output.dotIder), options.out)
+                    Output.output(
+                      file,
+                      DataFlowOutput(s),
+                      wcfg.toDot(Output.labeler(res, an.stateAfterNode),
+                                 Output.dotIder),
+                      options.out)
                   }
                 }
             }
           }
 
           // run selected interprocedural flow-sensitive analyses
-          if (options.icfg | options.dfAnalysis.exists(p => p._2 != dfo.Disabled && dfo.interprocedural(p._2))) {
+          if (options.icfg | options.dfAnalysis.exists(
+                p => p._2 != dfo.Disabled && dfo.interprocedural(p._2))) {
 
             // generate control-flow graph
             val wcfg = if (options.cfa) {
-              log.verb("Building interprocedural control flow graph using control flow analysis")
+              log.verb(
+                "Building interprocedural control flow graph using control flow analysis")
               InterproceduralProgramCfg.generateFromProgramWithCfa(programNode)
             } else {
               log.verb("Building interprocedural control flow graph")
@@ -234,8 +253,9 @@ object Tip extends App {
             }
 
             if (options.icfg) {
-              Output.output(file, OtherOutput(OutputKindE.icfg), wcfg.toDot({ x =>
-                x.toString
+              Output.output(file, OtherOutput(OutputKindE.icfg), wcfg.toDot({
+                x =>
+                  x.toString
               }, Output.dotIder), options.out)
             }
 
@@ -248,10 +268,16 @@ object Tip extends App {
                     val res = an.analyze()
                     val res2 =
                       if (dfo.contextsensitive(v))
-                        Output.transform(res.asInstanceOf[Map[(CallContext, CfgNode), _]])
+                        Output.transform(
+                          res.asInstanceOf[Map[(CallContext, CfgNode), _]])
                       else
                         res.asInstanceOf[Map[CfgNode, _]]
-                    Output.output(file, DataFlowOutput(s), wcfg.toDot(Output.labeler(res2, an.stateAfterNode), Output.dotIder), options.out)
+                    Output.output(
+                      file,
+                      DataFlowOutput(s),
+                      wcfg.toDot(Output.labeler(res2, an.stateAfterNode),
+                                 Output.dotIder),
+                      options.out)
                   }
                 }
             }
@@ -261,8 +287,12 @@ object Tip extends App {
           if (options.types) {
             // (for information about the use of 'implicit', see [[tip.analysis.TypeAnalysis]])
             log.verb("Starting TypeAnalysis")
-            implicit val typeData: TypeData = new TypeAnalysis(programNode).analyze()
-            Output.output(file, OtherOutput(OutputKindE.types), programNode.toTypedString, options.out)
+            implicit val typeData: TypeData =
+              new TypeAnalysis(programNode).analyze()
+            Output.output(file,
+                          OtherOutput(OutputKindE.types),
+                          programNode.toTypedString,
+                          options.out)
           }
 
           // run Andersen analysis, if selected
@@ -319,11 +349,17 @@ object Tip extends App {
     if (s.head == '-')
       s match {
         case "-normalizepointers" =>
-          options.normalizer = new tip.ast.CombineNormalizers(options.normalizer, tip.ast.PointersNormalizer)
+          options.normalizer = new tip.ast.CombineNormalizers(
+            options.normalizer,
+            tip.ast.PointersNormalizer)
         case "-normalizecalls" =>
-          options.normalizer = new tip.ast.CombineNormalizers(options.normalizer, tip.ast.CallsNormalizer)
+          options.normalizer = new tip.ast.CombineNormalizers(
+            options.normalizer,
+            tip.ast.CallsNormalizer)
         case "-normalizereturns" =>
-          options.normalizer = new tip.ast.CombineNormalizers(options.normalizer, tip.ast.ReturnsNormalizer)
+          options.normalizer = new tip.ast.CombineNormalizers(
+            options.normalizer,
+            tip.ast.ReturnsNormalizer)
         case "-cfg" =>
           options.cfg = true
         case "-icfg" =>
@@ -336,9 +372,13 @@ object Tip extends App {
           options.andersen = true
         case "-steensgaard" =>
           options.steensgaard = true
-        case "-sign" | "-livevars" | "-available" | "-vbusy" | "-reaching" | "-constprop" | "-interval" | "-copyconstprop" | "-uninitvars" | "-taint" =>
+        case "-sign" | "-livevars" | "-available" | "-vbusy" | "-reaching" |
+            "-constprop" | "-interval" | "-copyconstprop" | "-uninitvars" |
+            "-taint" =>
           options.dfAnalysis += dfa.withName(args(i).drop(1)) -> {
-            if (i + 1 < args.length && dfo.values.map(_.toString()).contains(args(i + 1))) {
+            if (i + 1 < args.length && dfo.values
+                  .map(_.toString())
+                  .contains(args(i + 1))) {
               i = i + 1
               dfo.withName(args(i))
             } else

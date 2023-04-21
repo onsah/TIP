@@ -22,9 +22,9 @@ class SimpleCubicSolver[V, T] {
   }
 
   private class Node(
-    val succ: mutable.Set[V] = mutable.Set(), // note: the edges between nodes go via the variables
-    val tokenSol: mutable.BitSet = new mutable.BitSet(), // the current solution bitvector
-    val conditionals: mutable.Map[Int, mutable.Set[(V, V)]] = mutable.Map() // the pending conditional constraints
+      val succ: mutable.Set[V] = mutable.Set(), // note: the edges between nodes go via the variables
+      val tokenSol: mutable.BitSet = new mutable.BitSet(), // the current solution bitvector
+      val conditionals: mutable.Map[Int, mutable.Set[(V, V)]] = mutable.Map() // the pending conditional constraints
   )
 
   /**
@@ -117,14 +117,16 @@ class SimpleCubicSolver[V, T] {
     * Adds a constraint of type t&#8712;&#10214;x&#10215;&#8658;&#10214;y&#10215;&#8838;&#10214;z&#10215;.
     */
   def addConditionalConstraint(t: T, x: V, y: V, z: V): Unit = {
-    log.verb(s"Adding constraint $t \u2208 \u27E6$x\u27E7 \u21D2 \u27E6$y\u27E7 \u2286 \u27E6$z\u27E7")
+    log.verb(
+      s"Adding constraint $t \u2208 \u27E6$x\u27E7 \u21D2 \u27E6$y\u27E7 \u2286 \u27E6$z\u27E7")
     val xn = getOrMakeNode(x)
     if (xn.tokenSol.contains(t)) {
       // Already enabled
       addSubsetConstraint(y, z)
     } else if (y != z) {
       // Not yet enabled, add to pending list
-      log.verb(s"Condition $t \u2208 \u27E6$x\u27E7 not yet enabled, adding (\u27E6$y\u27E7,\u27E6$z\u27E7) to pending")
+      log.verb(
+        s"Condition $t \u2208 \u27E6$x\u27E7 not yet enabled, adding (\u27E6$y\u27E7,\u27E6$z\u27E7) to pending")
       xn.conditionals
         .getOrElseUpdate(t, mutable.Set[(V, V)]())
         .add((y, z))
@@ -136,6 +138,8 @@ class SimpleCubicSolver[V, T] {
     */
   def getSolution: Map[V, Set[T]] = {
     val intToToken = tokenToInt.map(p => p._2 -> p._1).toMap[Int, T]
-    varToNode.keys.map(v => v -> getOrMakeNode(v).tokenSol.map(intToToken).toSet).toMap
+    varToNode.keys
+      .map(v => v -> getOrMakeNode(v).tokenSol.map(intToToken).toSet)
+      .toMap
   }
 }
